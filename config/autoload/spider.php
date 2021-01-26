@@ -25,7 +25,7 @@ return [
             'year' => '//div[@id="waterfall"]/div/a/div[2]/span/date[2]/text()',
         ],
         'subject' => [
-            'genres' => '//span[@class="genre"]/a[1]/text()',
+            'genres' => '//span[@class="genre" and  not(@onmouseover)]/a[1]/text()',
             'images_medium' => '//a[@class="bigImage"]/@href',
             'title' => '//div[@class="container"]/h3/text()',
             'rating' => '',
