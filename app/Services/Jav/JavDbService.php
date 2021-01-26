@@ -58,28 +58,27 @@ class JavDbService
     public function search()
     {
         $dom = new Document($this->contents);
-        $genres_arr = [];
-        $alt_arr = $dom->find(config(sprintf("%s.search.alt", $this->rule_keys)), Query::TYPE_XPATH);
-        $images_arr = $dom->find(config(sprintf("%s.search.images", $this->rule_keys)), Query::TYPE_XPATH);
-        $directors_arr = [];
-        if (config(sprintf("%s.search.directors", $this->rule_keys), '')) {
-            $directors_arr = $dom->find(config(sprintf("%s.search.directors", $this->rule_keys)), Query::TYPE_XPATH);
-        }
-        $title_arr = $dom->find(config(sprintf("%s.search.title", $this->rule_keys)), Query::TYPE_XPATH);
-        $years = [];
-        if (config(sprintf("%s.search.year", $this->rule_keys), '')) {
-            $years = $dom->find(config(sprintf("%s.search.year", $this->rule_keys)), Query::TYPE_XPATH);
-        }
+        $search_xpath = ['genres', 'alt', 'images', 'directors', 'title', 'year'];
+        list($genres, $alt, $images, $directors, $title, $year) = collect($search_xpath)
+            ->map(function ($rule_name, $key) use ($dom) {
+                if (config(sprintf("%s.search.%s", $this->rule_keys, $rule_name))) {
+                    return $dom->find(
+                        config(sprintf("%s.search.%s", $this->rule_keys, $rule_name)),
+                        Query::TYPE_XPATH
+                    );
+                }
+                return [];
+            });
         $list = [];
-        foreach ($title_arr as $key => $value) {
+        foreach ($title as $key => $value) {
             $list[] = [
-                'genres' => $genres_arr,
-                'alt' => $this->uriPretreatment(Arr::get($alt_arr, $key, '')),
-                'directors' => Arr::get($directors_arr, $key, []),
-                'title' => Arr::get($title_arr, $key, ''),
-                'year' => Arr::get($years, $key, '') ?
-                    Carbon::parse(Arr::get($years, $key, ''))->year : '',
-                'images' => $this->uriPretreatment(Arr::get($images_arr, $key, ''))
+                'genres' => $genres,
+                'alt' => $this->uriPretreatment(Arr::get($alt, $key, '')),
+                'directors' => Arr::get($directors, $key, []),
+                'title' => Arr::get($title, $key, ''),
+                'year' => Arr::get($year, $key, '') ?
+                    Carbon::parse(Arr::get($year, $key, ''))->year : '',
+                'images' => $this->uriPretreatment(Arr::get($images, $key, ''))
             ];
         }
         return $list;
