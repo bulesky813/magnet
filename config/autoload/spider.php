@@ -7,6 +7,13 @@ return [
             'directors' => '/html/body/div[2]/article[2]/div[2]/div/ul/li/p[3]/a/text()',
             'title' => '/html/body/div[2]/article[2]/div[2]/div/ul/li/a/p/text()',
             'year' => '',
+        ],
+        'subject' => [
+            'genres' => '//div[@class="detail_data"]/table[2]/tr[9]/td/a/text()',
+            'images_medium' => '//div[@class="detail_photo"]/h2/img/@src',
+            'title' => '/html/body/div[2]/article[2]/div[1]/h1/text()',
+            'rating' => '//td[@class="review"]/text()',
+            'casts' => '//div[@class="detail_data"]/table[2]/tr[1]/td/a'
         ]
     ],
     'javbus' => [
@@ -15,7 +22,7 @@ return [
             'images' => '//div[@id="waterfall"]/div/a/div[1]/img/@src',
             'directors' => '',
             'title' => '//div[@id="waterfall"]/div/a/div[1]/img/@title',
-            'year' => '',
+            'year' => '//div[@id="waterfall"]/div/a/div[2]/span/date[2]/text()',
         ]
     ]
 ];
