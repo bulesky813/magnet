@@ -23,6 +23,13 @@ return [
             'directors' => '',
             'title' => '//div[@id="waterfall"]/div/a/div[1]/img/@title',
             'year' => '//div[@id="waterfall"]/div/a/div[2]/span/date[2]/text()',
+        ],
+        'subject' => [
+            'genres' => '//span[@class="genre"]/a[1]/text()',
+            'images_medium' => '//a[@class="bigImage"]/@href',
+            'title' => '//div[@class="container"]/h3/text()',
+            'rating' => '',
+            'casts' => '//div[@class="star-name"]/a'
         ]
     ]
 ];

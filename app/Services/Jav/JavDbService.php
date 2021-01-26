@@ -111,7 +111,7 @@ class JavDbService
             'rating' => trim(implode("", $rating)),
             'casts' => collect($casts)->map(function ($cast, $key) {
                 return [
-                    'url' => sprintf('%s://%s', $this->uri['scheme'], $this->uri['host']) . $cast->getAttribute("href"),
+                    'url' => $this->uriPretreatment($cast->getAttribute("href")),
                     'name' => $cast->text()
                 ];
             })->toArray()
