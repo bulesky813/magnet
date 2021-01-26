@@ -40,14 +40,18 @@ class JavDbService
 
         try {
             $response = $this->gs->create([
-                'base_uri' => sprintf('%s://%s', $this->uri['scheme'], $this->uri['host']),
+                'base_uri' => $this->uriPretreatment(''),
                 'verify' => false
-            ])->request('GET', sprintf("%s?%s", $this->uri['path'], Arr::get($this->uri, 'query', '')), [
-                'cookies' => $this->cookies(),
-                'headers' => [
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
+            ])->request(
+                'GET',
+                sprintf("%s?%s", Arr::get($this->uri, 'path', ''), Arr::get($this->uri, 'query', '')),
+                [
+                    'cookies' => $this->cookies(),
+                    'headers' => [
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
+                    ]
                 ]
-            ]);
+            );
         } catch (\Throwable $e) {
             throw $e;
         }
