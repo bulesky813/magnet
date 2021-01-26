@@ -22,8 +22,14 @@ class JavDbService
 
     public function __construct(string $url)
     {
+        $this->uriChange($url);
+    }
+
+    public function uriChange($url): JavDbService
+    {
         $this->url = $url;
         $this->uri = parse_url($url);
+        return $this;
     }
 
     public function spider(): JavDbService
@@ -32,23 +38,11 @@ class JavDbService
         try {
             $response = $this->gs->create([
                 'base_uri' => sprintf('%s://%s', $this->uri['scheme'], $this->uri['host']),
-                'verify' => false,
-                'debug' => true
+                'verify' => false
             ])->request('GET', sprintf("%s?%s", $this->uri['path'], Arr::get($this->uri, 'query', '')), [
-                'proxy' => 'tcp://192.168.100.29:1081',
-                'debug' => true,
                 'cookies' => $this->cookies(),
                 'headers' => [
-                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-                    'Accept-Encoding' => 'gzip, deflate, br',
-                    'Accept-Language' => 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
-                    'Connection' => 'keep-alive',
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50',
-                    'Sec-Fetch-Dest' => 'document',
-                    'Sec-Fetch-Mode' => 'navigate',
-                    'Sec-Fetch-Site' => 'same-origin',
-                    'Sec-Fetch-User' => '?1',
-                    'Upgrade-Insecure-Requests' => 1,
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
                 ]
             ]);
         } catch (\Throwable $e) {
@@ -65,7 +59,10 @@ class JavDbService
         $genres_arr = [];
         $alt_arr = $dom->find(config(sprintf("spider.%s.search.alt", $host_keys)), Query::TYPE_XPATH);
         $images_arr = $dom->find(config(sprintf("spider.%s.search.images", $host_keys)), Query::TYPE_XPATH);
-        $directors_arr = $dom->find(config(sprintf("spider.%s.search.directors", $host_keys)), Query::TYPE_XPATH);
+        $directors_arr = [];
+        if (config(sprintf("spider.%s.search.directors", $host_keys), '')) {
+            $directors_arr = $dom->find(config(sprintf("spider.%s.search.directors", $host_keys)), Query::TYPE_XPATH);
+        }
         $title_arr = $dom->find(config(sprintf("spider.%s.search.title", $host_keys)), Query::TYPE_XPATH);
         if (config(sprintf("spider.%s.search.year", $host_keys), '')) {
             $year = $dom->find(config(sprintf("spider.%s.search.year", $host_keys)), Query::TYPE_XPATH);
@@ -74,8 +71,9 @@ class JavDbService
         foreach ($title_arr as $key => $value) {
             $list[] = [
                 'genres' => $genres_arr,
-                'alt' => sprintf('%s://%s', $this->uri['scheme'], $this->uri['host']) . $alt_arr[$key],
-                'directors' => [$directors_arr[$key]->text()],
+                'alt' => strpos($alt_arr[$key], 'http') === false ?
+                    sprintf('%s://%s', $this->uri['scheme'], $this->uri['host']) . $alt_arr[$key] : $alt_arr[$key],
+                'directors' => [Arr::get($directors_arr, $key, '')],
                 'title' => $title_arr[$key],
                 'year' => $year ?? '',
                 'images' => $images_arr[$key]

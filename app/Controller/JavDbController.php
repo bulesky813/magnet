@@ -17,6 +17,7 @@ use App\Resource\Jeenpi\Subject;
 use App\Services\Base\GuzzleService;
 use App\Services\Jav\JavDbService;
 use Hyperf\Di\Annotation\Inject;
+use Hyperf\Utils\Arr;
 
 class JavDbController extends AbstractController
 {
@@ -29,16 +30,20 @@ class JavDbController extends AbstractController
     public function actionMovieSearch()
     {
         $key_1 = $this->request->input('Key1');
-        $jds = make(
-            JavDbService::class,
-            [
-                sprintf(
-                    'https://www.mgstage.com/search/cSearch.php?search_word=%s&x=76&x=14&search_shop_id=&type=top',
-                    $key_1
-                )
-            ]
-        );
-        return Search::make($jds->spider()->search())->toArray();
+        $jds = make(JavDbService::class, [
+            sprintf(
+                'https://www.mgstage.com/search/cSearch.php?search_word=%s&x=76&x=14&search_shop_id=&type=top',
+                $key_1
+            )
+        ]);
+        $search_result = $jds->spider()->search();
+        if (!$search_result) {
+            $search_result = $jds->uriChange(sprintf(
+                'https://www.javbus.com/search/%s&type=&parent=ce',
+                $key_1
+            ))->spider()->search();
+        }
+        return Search::make($search_result)->toArray();
     }
 
     public function actionMovieSubject()
