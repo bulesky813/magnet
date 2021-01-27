@@ -27,13 +27,13 @@ class Subject extends JsonResource
                 'images_large' => Arr::get($this->resource, 'images_large', ''),
                 'original_title' => Arr::get($this->resource, 'original_title', []),
                 'id' => Arr::get($this->resource, 'alt', ''),
-                'summary' => '',
+                'summary' => Arr::get($this->resource, 'summary', ''),
                 'title' => Arr::get($this->resource, 'title', ''),
                 'countries' => [
                     '日本'
                 ],
                 'rating' => Arr::get($this->resource, 'rating', ''),
-                'year' => '',
+                'year' => Arr::get($this->resource, 'year', ''),
                 'casts' => Arr::get($this->resource, 'casts', [])
             ]
         ];

@@ -13,7 +13,9 @@ return [
             'images_medium' => '//div[@class="detail_photo"]/h2/img/@src',
             'title' => '/html/body/div[2]/article[2]/div[1]/h1/text()',
             'rating' => '//td[@class="review"]/text()',
-            'casts' => '//div[@class="detail_data"]/table[2]/tr[1]/td/a'
+            'casts' => '//div[@class="detail_data"]/table[2]/tr[1]/td/a',
+            'year' => '//div[@class="detail_data"]/table[2]/tr[5]/td/text()',
+            'summary' => '//p[@class="txt introduction"]/text()'
         ]
     ],
     'javbus' => [
