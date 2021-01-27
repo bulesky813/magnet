@@ -92,8 +92,8 @@ class JavDbService
     public function subject()
     {
         $dom = new Document($this->contents);
-        $subject_xpath = ['genres', 'images_medium', 'title', 'rating', 'casts'];
-        list($genres, $images_medium, $title, $rating, $casts) = collect($subject_xpath)
+        $subject_xpath = ['genres', 'images_medium', 'title', 'rating', 'casts', 'year', 'summary'];
+        list($genres, $images_medium, $title, $rating, $casts, $year, $summary) = collect($subject_xpath)
             ->map(function ($xpath_name, $key) use ($dom) {
                 if (config(sprintf("%s.subject.%s", $this->rule_keys, $xpath_name))) {
                     return $dom->find(
@@ -113,8 +113,11 @@ class JavDbService
                 return trim($t);
             }),
             'alt' => $this->url,
+            'summary' => trim(Arr::get($summary, 0, '')),
             'title' => trim(Arr::get($title, 0, '')),
             'rating' => trim(implode("", $rating)),
+            'year' => trim(Arr::get($year, 0, ''))
+                ? Carbon::parse(Arr::get($year, 0, ''))->format('Y/m/d') : '',
             'casts' => collect($casts)->map(function ($cast, $key) {
                 return [
                     'url' => $this->uriPretreatment($cast->getAttribute("href")),
