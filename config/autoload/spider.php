@@ -9,12 +9,12 @@ return [
             'year' => '',
         ],
         'subject' => [
-            'genres' => '//div[@class="detail_data"]/table[2]/tr[9]/td/a/text()',
-            'images_medium' => '//div[@class="detail_photo"]/h2/img/@src',
+            'genres' => '//div[@class="detail_data"]/table[2]/tr[9]/td/a/text()|//div[@class="detail_data"]/table/tr[8]/td/a/text()',
+            'images_medium' => '//div[@class="detail_photo"]/h2/img/@src|//div[@class="detail_data"]/div/h2/img/@src',
             'title' => '/html/body/div[2]/article[2]/div[1]/h1/text()',
             'rating' => '//td[@class="review"]/text()',
-            'casts' => '//div[@class="detail_data"]/table[2]/tr[1]/td/a',
-            'year' => '//div[@class="detail_data"]/table[2]/tr[5]/td/text()',
+            'casts' => '//div[@class="detail_data"]/table[2]/tr[1]/td/a|//div[@class="detail_data"]/table/tr[1]/td/text()',
+            'year' => '//div[@class="detail_data"]/table[2]/tr[5]/td/text()|//div[@class="detail_data"]/table/tr[5]/td/text()',
             'summary' => '//p[@class="txt introduction"]/text()'
         ]
     ],

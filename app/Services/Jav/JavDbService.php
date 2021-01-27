@@ -5,6 +5,7 @@ namespace App\Services\Jav;
 use App\Services\Base\GuzzleService;
 use Carbon\Carbon;
 use DiDom\Document;
+use DiDom\Element;
 use DiDom\Query;
 use GuzzleHttp\Cookie\CookieJar;
 use Hyperf\Di\Annotation\Inject;
@@ -95,11 +96,20 @@ class JavDbService
         $subject_xpath = ['genres', 'images_medium', 'title', 'rating', 'casts', 'year', 'summary'];
         list($genres, $images_medium, $title, $rating, $casts, $year, $summary) = collect($subject_xpath)
             ->map(function ($xpath_name, $key) use ($dom) {
-                if (config(sprintf("%s.subject.%s", $this->rule_keys, $xpath_name))) {
-                    return $dom->find(
-                        config(sprintf("%s.subject.%s", $this->rule_keys, $xpath_name)),
-                        Query::TYPE_XPATH
-                    );
+                $type_xpath = config(sprintf("%s.subject.%s", $this->rule_keys, $xpath_name));
+                if ($type_xpath) {
+                    if (strpos($type_xpath, '|') === false) {
+                        return $dom->find($type_xpath, Query::TYPE_XPATH);
+                    } else {
+                        $elements = [];
+                        collect(explode("|", $type_xpath))->each(function ($child_xpath, $key) use ($dom, &$elements) {
+                            $elements = $dom->find($child_xpath, Query::TYPE_XPATH);
+                            if (count($elements) > 0) {
+                                return false;
+                            }
+                        });
+                        return $elements;
+                    }
                 }
                 return [];
             });
@@ -120,8 +130,8 @@ class JavDbService
                 ? Carbon::parse(Arr::get($year, 0, ''))->format('Y/m/d') : '',
             'casts' => collect($casts)->map(function ($cast, $key) {
                 return [
-                    'url' => $this->uriPretreatment($cast->getAttribute("href")),
-                    'name' => $cast->text()
+                    'url' => $cast instanceof Element ? $this->uriPretreatment($cast->getAttribute("href")) : '',
+                    'name' => trim($cast instanceof Element ? $cast->text() : $cast)
                 ];
             })->toArray()
         ];
