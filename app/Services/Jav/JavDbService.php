@@ -53,7 +53,7 @@ class JavDbService
                 ]
             );
         } catch (\Throwable $e) {
-            throw $e;
+            return $this;
         }
         $this->contents = $response->getBody()->getContents();
         return $this;
@@ -78,7 +78,8 @@ class JavDbService
             $list[] = [
                 'genres' => $genres,
                 'alt' => $this->uriPretreatment(Arr::get($alt, $key, '')),
-                'directors' => Arr::get($directors, $key, []),
+                'directors' => Arr::get($directors, $key, '')
+                    ? [Arr::get($directors, $key, '')] : [],
                 'title' => Arr::get($title, $key, ''),
                 'year' => Arr::get($year, $key, '') ?
                     Carbon::parse(Arr::get($year, $key, ''))->year : '',
@@ -108,9 +109,11 @@ class JavDbService
             }),
             'images_medium' => Arr::get($images_medium, 0, ''),
             'images_large' => str_replace('_o1_', '_e_', Arr::get($images_medium, 0, '')),
-            'original_title' => $title,
+            'original_title' => collect($title)->map(function ($t, $k) {
+                return trim($t);
+            }),
             'alt' => $this->url,
-            'title' => Arr::get($title, 0, ''),
+            'title' => trim(Arr::get($title, 0, '')),
             'rating' => trim(implode("", $rating)),
             'casts' => collect($casts)->map(function ($cast, $key) {
                 return [
