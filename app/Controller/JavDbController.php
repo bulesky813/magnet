@@ -37,7 +37,7 @@ class JavDbController extends AbstractController
             )
         ]);
         $search_result = $jds->spider()->search();
-        if (!$search_result) {
+        if (count($search_result) == 0) {
             $search_result = $jds->uriChange(sprintf(
                 'https://www.javbus.com/search/%s&type=&parent=ce',
                 $key_1
