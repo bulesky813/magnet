@@ -58,23 +58,52 @@ class JavDbController extends AbstractController
     public function actionSpiderSubject()
     {
         $url = $this->request->input('url');
-        $jds = make(JavDbService::class, [$url]);
-        $search_result = $jds->spider()->search();
-        collect($search_result)->each(function ($subject, $key) {
-            $url = Arr::get($subject, 'alt', '');
-            $this->qs->subject([
-                'url' => Arr::get($subject, 'alt', '')
-            ]);
-        });
+        $page = 1;
+        $jds = make(JavDbService::class, [sprintf($url, $page)]);
+        do {
+            $search_result = $jds->spider()->search();
+            collect($search_result)->each(function ($subject, $key) {
+                $this->qs->subject([
+                    'url' => Arr::get($subject, 'alt', '')
+                ]);
+            });
+            $page++;
+            $jds->uriChange(sprintf($url, $page));
+        } while (count($search_result) > 0);
+        return [
+            'code' => 0,
+            'data' => [
+                'page' => $page
+            ],
+            'message' => ''
+        ];
     }
 
     public function actionViewSubject()
     {
         $subjects = make(\App\Model\Subject::class)::query()
+            ->where('process', 0)
             ->orderBy("favorites", 'desc')
             ->offset(0)
             ->limit(10)
             ->get();
         return view('subject', ['subjects' => $subjects]);
+    }
+
+    public function actionAjaxProcessSubject()
+    {
+        try {
+            $number = $this->request->input('number');
+            $subjects = make(\App\Model\Subject::class)::query()
+                ->where('number', $number)
+                ->update(['process' => 1]);
+            return [
+                'code' => 0,
+                'data' => [],
+                'message' => ''
+            ];
+        } catch (\Throwable $e) {
+            throw $e;
+        }
     }
 }

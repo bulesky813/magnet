@@ -33,3 +33,8 @@ Router::addRoute(
     '/javdb/v1/view/subject',
     'App\Controller\JavDbController@actionViewSubject'
 );
+Router::addRoute(
+    ['GET', 'POST', 'HEAD'],
+    '/javdb/v1/ajax/process/subject',
+    'App\Controller\JavDbController@actionAjaxProcessSubject'
+);
