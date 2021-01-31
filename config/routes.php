@@ -23,3 +23,13 @@ Router::addRoute(
     '/javdb/v1/movie/subject',
     'App\Controller\JavDbController@actionMovieSubject'
 );
+Router::addRoute(
+    ['GET', 'POST', 'HEAD'],
+    '/javdb/v1/spider/subject',
+    'App\Controller\JavDbController@actionSpiderSubject'
+);
+Router::addRoute(
+    ['GET', 'POST', 'HEAD'],
+    '/javdb/v1/view/subject',
+    'App\Controller\JavDbController@actionViewSubject'
+);

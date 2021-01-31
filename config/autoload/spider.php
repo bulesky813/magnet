@@ -15,7 +15,10 @@ return [
             'rating' => '//td[@class="review"]/text()',
             'casts' => '//div[@class="detail_data"]/table[2]/tr[1]/td/a|//div[@class="detail_data"]/table/tr[1]/td/text()',
             'year' => '//div[@class="detail_data"]/table[2]/tr[5]/td/text()|//div[@class="detail_data"]/table/tr[5]/td/text()',
-            'summary' => '//p[@class="txt introduction"]/text()'
+            'summary' => '//p[@class="txt introduction"]/text()',
+            'number' => '//div[@class="detail_data"]/table[2]/tr[4]/td/text()|//div[@class="detail_data"]/table/tr[4]/td/text()',
+            'images_content' => '//*[@id="sample-photo"]/dd/ul/li/a/@href',
+            'favorites' => '//div[@class="detail_data"]/table[1]/tbody/tr[1]/td[2]/text()'
         ]
     ],
     'javbus' => [

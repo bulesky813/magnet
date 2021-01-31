@@ -47,6 +47,7 @@ class JavDbService
                 'GET',
                 sprintf("%s?%s", Arr::get($this->uri, 'path', ''), Arr::get($this->uri, 'query', '')),
                 [
+                    'proxy' => env('PROXY', ''),
                     'cookies' => $this->cookies(),
                     'headers' => [
                         'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
@@ -93,8 +94,19 @@ class JavDbService
     public function subject()
     {
         $dom = new Document($this->contents);
-        $subject_xpath = ['genres', 'images_medium', 'title', 'rating', 'casts', 'year', 'summary'];
-        list($genres, $images_medium, $title, $rating, $casts, $year, $summary) = collect($subject_xpath)
+        $subject_xpath = [
+            'genres',
+            'images_medium',
+            'title',
+            'rating',
+            'casts',
+            'year',
+            'summary',
+            'number',
+            'images_content',
+            'favorites'
+        ];
+        list($genres, $images_medium, $title, $rating, $casts, $year, $summary, $number, $images_content, $favorites) = collect($subject_xpath)
             ->map(function ($xpath_name, $key) use ($dom) {
                 $type_xpath = config(sprintf("%s.subject.%s", $this->rule_keys, $xpath_name));
                 if ($type_xpath) {
@@ -133,7 +145,10 @@ class JavDbService
                     'url' => $cast instanceof Element ? $this->uriPretreatment($cast->getAttribute("href")) : '',
                     'name' => trim($cast instanceof Element ? $cast->text() : $cast)
                 ];
-            })->toArray()
+            })->toArray(),
+            'number' => trim(Arr::get($number, 0, '')),
+            'images_content' => $images_content,
+            'favorites' => str_replace([','], [""], trim(Arr::get($favorites, 0, '')))
         ];
     }
 

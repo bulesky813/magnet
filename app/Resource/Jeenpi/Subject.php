@@ -34,7 +34,10 @@ class Subject extends JsonResource
                 ],
                 'rating' => Arr::get($this->resource, 'rating', ''),
                 'year' => Arr::get($this->resource, 'year', ''),
-                'casts' => Arr::get($this->resource, 'casts', [])
+                'casts' => Arr::get($this->resource, 'casts', []),
+                'number' => Arr::get($this->resource, 'number', ''),
+                'images_content' => Arr::get($this->resource, 'images_content', []),
+                'favorites' => Arr::get($this->resource, 'favorites', 0)
             ]
         ];
     }

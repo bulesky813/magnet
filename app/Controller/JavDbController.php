@@ -14,18 +14,19 @@ namespace App\Controller;
 
 use App\Resource\Jeenpi\Search;
 use App\Resource\Jeenpi\Subject;
-use App\Services\Base\GuzzleService;
 use App\Services\Jav\JavDbService;
+use App\Services\Queue\QueueService;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\Utils\Arr;
+use function Hyperf\ViewEngine\view;
 
 class JavDbController extends AbstractController
 {
     /**
      * @Inject
-     * @var GuzzleService
+     * @var QueueService
      */
-    protected $gs;
+    protected $qs;
 
     public function actionMovieSearch()
     {
@@ -52,5 +53,28 @@ class JavDbController extends AbstractController
         $jds = make(JavDbService::class, [$url]);
         $subject = $jds->spider()->subject();
         return Subject::make($subject)->toArray();
+    }
+
+    public function actionSpiderSubject()
+    {
+        $url = $this->request->input('url');
+        $jds = make(JavDbService::class, [$url]);
+        $search_result = $jds->spider()->search();
+        collect($search_result)->each(function ($subject, $key) {
+            $url = Arr::get($subject, 'alt', '');
+            $this->qs->subject([
+                'url' => Arr::get($subject, 'alt', '')
+            ]);
+        });
+    }
+
+    public function actionViewSubject()
+    {
+        $subjects = make(\App\Model\Subject::class)::query()
+            ->orderBy("favorites", 'desc')
+            ->offset(0)
+            ->limit(10)
+            ->get();
+        return view('subject', ['subjects' => $subjects]);
     }
 }
