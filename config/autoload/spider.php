@@ -36,5 +36,26 @@ return [
             'rating' => '',
             'casts' => '//div[@class="star-name"]/a'
         ]
+    ],
+    'dmm' => [
+        'search' => [
+            'alt' => '//ul[@id="list"]/li/div/p[@class="tmb"]/a/@href',
+            'images' => '//span[@class="img"]/img/@src',
+            'directors' => '',
+            'title' => '//span[@class="txt"]/text()',
+            'year' => '',
+        ],
+        'subject' => [
+            'genres' => '//table[@class="mg-b20"]/tr[11]/td[2]/a/text()',
+            'images_medium' => '//div[@id="sample-video"]/a/img/@src',
+            'title' => '//h1[@id="title"]/text()',
+            'rating' => '//p[@class="d-review__average"]/strong/text()',
+            'casts' => '//table[@class="mg-b20"]/tr[6]/td[2]/span/a',
+            'year' => '//table[@class="mg-b20"]/tr[4]/td[2]/text()',
+            'summary' => '//div[@class="mg-b20 lh4"]/text()',
+            'number' => '//table[@class="mg-b20"]/tr[12]/td[2]/text()',
+            'images_content' => '//a[@name="sample-image"]/img/@src',
+            'favorites' => '//span[@class="tx-count"]/span[1]/text()'
+        ]
     ]
 ];

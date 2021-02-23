@@ -31,8 +31,8 @@ class QueueService
             if (!$number) {
                 return true;
             }
-            make(Subject::class)->firstOrCreate(['number' => $number], [
-                'number' => $number,
+            make(Subject::class)->firstOrCreate(['number' => strtoupper($number)], [
+                'number' => strtoupper($number),
                 'content' => $content,
                 'source' => $url,
                 'favorites' => $favorites

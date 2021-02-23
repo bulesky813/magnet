@@ -32,13 +32,12 @@ class JavDbService
     {
         $this->url = $url;
         $this->uri = parse_url($url);
-        $this->rule_keys = sprintf("spider.%s", str_replace(['www.', '.com'], [''], $this->uri['host']));
+        $this->rule_keys = sprintf("spider.%s", str_replace(['www.', '.com', '.co.jp'], [''], $this->uri['host']));
         return $this;
     }
 
     public function spider(): JavDbService
     {
-
         try {
             $response = $this->gs->create([
                 'base_uri' => $this->uriPretreatment(''),
@@ -152,6 +151,16 @@ class JavDbService
         ];
     }
 
+    public function hasNextPage(array $subjects): bool
+    {
+        switch ($this->rule_keys) {
+            case 'spider.dmm':
+                return count($subjects) == 121;
+            default:
+                return count($subjects) != 0;
+        }
+    }
+
     private function cookies(): CookieJar
     {
         return CookieJar::fromArray([
@@ -163,8 +172,9 @@ class JavDbService
             'adc' => 1,
             'bWdzdGFnZS5jb20%3D-_lr_uf_-r2icil' => '3d18cfe9-6a62-4361-8ebf-e2ae1013545f',
             'bWdzdGFnZS5jb20%3D-_lr_tabs_-r2icil%2Fmgs' => '{%22sessionID%22:0%2C%22recordingID%22:%224-e4a35bbd-c8de-4a22-8b55-05e7458d512f%22%2C%22lastActivity%22:1611593241591}',
-            'bWdzdGFnZS5jb20%3D-_lr_hb_-r2icil%2Fmgs' => '{%22heartbeat%22:1611593361686}'
-        ], '.mgstage.com');
+            'bWdzdGFnZS5jb20%3D-_lr_hb_-r2icil%2Fmgs' => '{%22heartbeat%22:1611593361686}',
+            'age_check_done' => 1
+        ], Arr::get($this->uri, 'host', ''));
     }
 
     private function uriPretreatment(string $url): string

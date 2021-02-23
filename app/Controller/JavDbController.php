@@ -69,7 +69,7 @@ class JavDbController extends AbstractController
             });
             $page++;
             $jds->uriChange(sprintf($url, $page));
-        } while (count($search_result) > 0);
+        } while ($jds->hasNextPage($search_result));
         return [
             'code' => 0,
             'data' => [
@@ -81,8 +81,12 @@ class JavDbController extends AbstractController
 
     public function actionViewSubject()
     {
+        $k = $this->request->input('k', '');
         $subjects = make(\App\Model\Subject::class)::query()
             ->where('process', 0)
+            ->when($k, function ($query) use ($k) {
+                $query->where('number', 'like', "%$k%");
+            })
             ->orderBy("favorites", 'desc')
             ->offset(0)
             ->limit(10)
