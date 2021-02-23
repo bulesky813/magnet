@@ -46,7 +46,6 @@ class JavDbService
                 'GET',
                 sprintf("%s?%s", Arr::get($this->uri, 'path', ''), Arr::get($this->uri, 'query', '')),
                 [
-                    'proxy' => env('PROXY', ''),
                     'cookies' => $this->cookies(),
                     'headers' => [
                         'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
@@ -124,6 +123,8 @@ class JavDbService
                 }
                 return [];
             });
+        $number = trim(Arr::get($number, 0, ''));
+        $other_casts = $this->findAvHelperCasts($number);
         return [
             'genres' => collect($genres)->map(function ($genre, $key) {
                 return trim($genre);
@@ -139,13 +140,13 @@ class JavDbService
             'rating' => trim(implode("", $rating)),
             'year' => trim(Arr::get($year, 0, ''))
                 ? Carbon::parse(Arr::get($year, 0, ''))->format('Y/m/d') : '',
-            'casts' => collect($casts)->map(function ($cast, $key) {
+            'casts' => $other_casts ? [$other_casts] : collect($casts)->map(function ($cast, $key) {
                 return [
                     'url' => $cast instanceof Element ? $this->uriPretreatment($cast->getAttribute("href")) : '',
                     'name' => trim($cast instanceof Element ? $cast->text() : $cast)
                 ];
             })->toArray(),
-            'number' => trim(Arr::get($number, 0, '')),
+            'number' => $number,
             'images_content' => $images_content,
             'favorites' => str_replace([','], [""], trim(Arr::get($favorites, 0, '')))
         ];
@@ -159,6 +160,38 @@ class JavDbService
             default:
                 return count($subjects) != 0;
         }
+    }
+
+    public function findAvHelperCasts(string $number): ?array
+    {
+        $response = $this->gs->create()->get("https://av-help.memo.wiki/search?keywords={$number}", [
+            'headers' => [
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
+            ]
+        ]);
+        $contents = $response->getBody()->getContents();
+        $dom = make(Document::class, [mb_convert_encoding($contents, 'utf-8', 'euc-jp')]);
+        $elements = $dom->find('//div[@class="body"]/h3/a', Query::TYPE_XPATH);
+        $casts_key = null;
+        collect($elements)->each(function ($casts, $key) use (&$casts_key) {
+            $response = $this->gs->create()->get($casts->getAttribute("href"), [
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
+                ]
+            ]);
+            $contents = mb_convert_encoding($response->getBody()->getContents(), 'utf-8', 'euc-jp');
+            if (strpos($contents, '名前') !== false && strpos($contents, '生年月日') !== false) {
+                $casts_key = $key;
+                return false;
+            };
+        });
+        if ($casts_key !== null) {
+            return [
+                'url' => $elements[$casts_key]->getAttribute("href"),
+                'name' => $elements[$casts_key]->text(),
+            ];
+        }
+        return [];
     }
 
     private function cookies(): CookieJar
