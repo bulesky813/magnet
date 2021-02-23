@@ -125,6 +125,7 @@ class JavDbService
                 }
                 return [];
             });
+        $number = trim(Arr::get($number, 0, ''));
         return [
             'genres' => collect($genres)->map(function ($genre, $key) {
                 return trim($genre);
@@ -145,11 +146,59 @@ class JavDbService
                     'url' => $cast instanceof Element ? $this->uriPretreatment($cast->getAttribute("href")) : '',
                     'name' => trim($cast instanceof Element ? $cast->text() : $cast)
                 ];
-            })->toArray(),
-            'number' => trim(Arr::get($number, 0, '')),
+            })->merge([$this->findAvHelperCasts($number)])->toArray(),
+            'number' => $number,
             'images_content' => $images_content,
             'favorites' => str_replace([','], [""], trim(Arr::get($favorites, 0, '')))
         ];
+    }
+
+    public function findAvHelperCasts(string $number): array
+    {
+        $response = $this->gs->create()->get("https://av-help.memo.wiki/search?keywords={$number}", [
+            'proxy' => env('PROXY', ''),
+            'headers' => [
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
+            ]
+        ]);
+        $contents = $response->getBody()->getContents();
+        $dom = make(Document::class, [mb_convert_encoding($contents, 'utf-8', 'euc-jp')]);
+        $casts_key = null;
+        collect($dom->find('//div[@class="body"]/p[1]/text()', Query::TYPE_XPATH))
+            ->each(function ($text, $key) use (&$casts_key) {
+                if (strpos($text, '別名') !== false) {
+                    $casts_key = $key;
+                    return false;
+                }
+            });
+        if ($casts_key == null) {
+            $elements = $dom->find('//div[@class="body"]/h3/a', Query::TYPE_XPATH);
+            collect($elements)->each(function ($casts, $key) use (&$casts_key) {
+                $response = $this->gs->create()->get($casts->getAttribute("href"), [
+                    'proxy' => env('PROXY', ''),
+                    'headers' => [
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
+                    ]
+                ]);
+                $contents = $response->getBody()->getContents();
+                if (strpos(mb_convert_encoding($contents, 'utf-8', 'euc-jp'), '名前(女優名)：') !== false) {
+                    $casts_key = $key;
+                    return false;
+                };
+            });
+            if ($casts_key !== null) {
+                return [
+                    'url' => $elements[$casts_key]->getAttribute("href"),
+                    'name' => $elements[$casts_key]->text(),
+                ];
+            }
+        } else {
+            $casts = $dom->find(sprintf('//div[@class="body"][%s]/h3[1]/a', $casts_key), Query::TYPE_XPATH)[0];
+            return [
+                'url' => $casts->getAttribute("href"),
+                'name' => $casts->text(),
+            ];
+        }
     }
 
     private function cookies(): CookieJar

@@ -19,7 +19,7 @@ class Search extends JsonResource
             "Msg" => "",
             "ActiveProxy" => false,
             "ProxyIP" => "",
-            "List" => collect($this->resource)->slice(0, 1)
+            "List" => collect($this->resource)->slice(0, 20)
         ];
     }
 }
