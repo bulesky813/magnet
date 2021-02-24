@@ -172,25 +172,38 @@ class JavDbService
         $contents = $response->getBody()->getContents();
         $dom = make(Document::class, [mb_convert_encoding($contents, 'utf-8', 'euc-jp')]);
         $elements = $dom->find('//div[@class="body"]/h3/a', Query::TYPE_XPATH);
-        $casts_key = null;
-        collect($elements)->each(function ($casts, $key) use (&$casts_key) {
-            $response = $this->gs->create()->get($casts->getAttribute("href"), [
-                'headers' => [
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
-                ]
-            ]);
-            $contents = mb_convert_encoding($response->getBody()->getContents(), 'utf-8', 'euc-jp');
-            if (strpos($contents, '名前') !== false && strpos($contents, '生年月日') !== false) {
-                $casts_key = $key;
-                return false;
+        $execute_callback = [];
+        do {
+            $casts = array_pop($elements);
+            $execute_callback[] = function () use ($casts) {
+                try {
+                    $response = $this->gs->create()->get($casts->getAttribute("href"), [
+                        'headers' => [
+                            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
+                        ]
+                    ]);
+                    $contents = mb_convert_encoding($response->getBody()->getContents(), 'utf-8', 'euc-jp');
+                    if (strpos($contents, '名前') !== false && strpos($contents, '生年月日') !== false) {
+                        return [
+                            'url' => $casts->getAttribute("href"),
+                            'name' => $casts->text(),
+                        ];
+                    }
+                    return false;
+                } catch (\Throwable $e) {
+                    return false;
+                }
             };
-        });
-        if ($casts_key !== null) {
-            return [
-                'url' => $elements[$casts_key]->getAttribute("href"),
-                'name' => $elements[$casts_key]->text(),
-            ];
-        }
+            if (count($execute_callback) == 3 || count($elements) == 0) {
+                $result = parallel($execute_callback);
+                foreach ($result as $casts_result) {
+                    if ($casts_result !== false) {
+                        return $casts_result;
+                    }
+                }
+                $execute_callback = [];
+            }
+        } while (count($elements) > 0);
         return [];
     }
 

@@ -30,11 +30,12 @@ return [
             'year' => '//div[@id="waterfall"]/div/a/div[2]/span/date[2]/text()',
         ],
         'subject' => [
-            'genres' => '//span[@class="genre" and  not(@onmouseover)]/a[1]/text()',
+            'genres' => '//span[@class="genre" and not(@onmouseover)]/label/a[1]/text()',
             'images_medium' => '//a[@class="bigImage"]/@href',
             'title' => '//div[@class="container"]/h3/text()',
             'rating' => '',
-            'casts' => '//div[@class="star-name"]/a'
+            'casts' => '//div[@class="star-name"]/a',
+            "number" => '//div[@class="col-md-3 info"]/p[1]/span[2]/text()'
         ]
     ],
     'dmm' => [
