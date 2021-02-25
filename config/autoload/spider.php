@@ -9,16 +9,49 @@ return [
             'year' => '',
         ],
         'subject' => [
-            'genres' => '//div[@class="detail_data"]/table[2]/tr[9]/td/a/text()|//div[@class="detail_data"]/table/tr[8]/td/a/text()',
-            'images_medium' => '//div[@class="detail_photo"]/h2/img/@src|//div[@class="detail_data"]/div/h2/img/@src',
+            'genres' => [
+                '//div[@class="detail_data"]/table[2]/tr[9]/td/a/text()',
+                '//div[@class="detail_data"]/table/tr[8]/td/a/text()'
+            ],
+            'images_medium' => [
+                '//div[@class="detail_photo"]/h2/img/@src',
+                '//div[@class="detail_data"]/div/h2/img/@src'
+            ],
             'title' => '/html/body/div[2]/article[2]/div[1]/h1/text()',
-            'rating' => '//td[@class="review"]/text()',
-            'casts' => '//div[@class="detail_data"]/table[2]/tr[1]/td/a|//div[@class="detail_data"]/table/tr[1]/td/text()',
-            'year' => '//div[@class="detail_data"]/table[2]/tr[5]/td/text()|//div[@class="detail_data"]/table/tr[5]/td/text()',
+            'rating' => [
+                [
+                    'xpath' => '//td[@class="review"]/text()',
+                    'eval' => 'if(preg_match("/[\d.]+/", $value, $matchs))$value=$matchs[0];'
+                ]
+            ],
+            'casts' => [
+                '//div[@class="detail_data"]/table[2]/tr[1]/td/a',
+                '//div[@class="detail_data"]/table/tr[1]/td/text()'
+            ],
+            'year' => [
+                [
+                    'xpath' => '//div[@class="detail_data"]/table[2]/tr[4]/td/text()',
+                    'eval' => 'if(strpos($value, "/") === false) $value = null;'
+                ],
+                [
+                    'xpath' => '//div[@class="detail_data"]/table[2]/tr[5]/td/text()',
+                    'eval' => 'if(strpos($value, "/") === false) $value = null;',
+                ],
+                '//div[@class="detail_data"]/table/tr[5]/td/text()'
+            ],
             'summary' => '//p[@class="txt introduction"]/text()',
-            'number' => '//div[@class="detail_data"]/table[2]/tr[4]/td/text()|//div[@class="detail_data"]/table/tr[4]/td/text()',
+            'number' => [
+                '//div[@class="detail_data"]/table[2]/tr[4]/td/text()',
+                '//div[@class="detail_data"]/table/tr[4]/td/text()'
+            ],
             'images_content' => '//*[@id="sample-photo"]/dd/ul/li/a/@href',
-            'favorites' => '//div[@class="detail_data"]/table[1]/tbody/tr[1]/td[2]/text()'
+            'favorites' => [
+                [
+                    'xpath' => '//dl[@class="detail_fav_cnt"]/text()',
+                    'eval' => 'if(preg_match("/[\d,]+/", $value, $matchs))$value=$matchs[0];'
+                ],
+                '//div[@class="detail_data"]/table[1]/tbody/tr[1]/td[2]/text()'
+            ]
         ]
     ],
     'javbus' => [
