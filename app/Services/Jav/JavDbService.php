@@ -46,6 +46,7 @@ class JavDbService
                 'GET',
                 sprintf("%s?%s", Arr::get($this->uri, 'path', ''), Arr::get($this->uri, 'query', '')),
                 [
+                    'proxy' => env('PROXY', ''),
                     'cookies' => $this->cookies(),
                     'headers' => [
                         'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
@@ -165,6 +166,7 @@ class JavDbService
     public function findAvHelperCasts(string $number): ?array
     {
         $response = $this->gs->create()->get("https://av-help.memo.wiki/search?keywords={$number}", [
+            'proxy' => env('PROXY', ''),
             'headers' => [
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
             ]
@@ -178,6 +180,7 @@ class JavDbService
             $execute_callback[] = function () use ($casts) {
                 try {
                     $response = $this->gs->create()->get($casts->getAttribute("href"), [
+                        'proxy' => env('PROXY', ''),
                         'headers' => [
                             'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
                         ]
