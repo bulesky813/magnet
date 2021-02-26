@@ -45,13 +45,7 @@ class JavDbService
             ])->request(
                 'GET',
                 sprintf("%s?%s", Arr::get($this->uri, 'path', ''), Arr::get($this->uri, 'query', '')),
-                [
-                    'proxy' => env('PROXY', ''),
-                    'cookies' => $this->cookies(),
-                    'headers' => [
-                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
-                    ]
-                ]
+                $this->headers()
             );
         } catch (\Throwable $e) {
             return $this;
@@ -149,7 +143,7 @@ class JavDbService
                 return trim($genre);
             }),
             'images_medium' => Arr::get($images_medium, 0, ''),
-            'images_large' => str_replace('_o1_', '_e_', Arr::get($images_medium, 0, '')),
+            'images_large' => Arr::get($images_medium, 0, ''),
             'original_title' => collect($title)->map(function ($t, $k) {
                 return trim($t);
             }),
@@ -183,12 +177,7 @@ class JavDbService
 
     public function findAvHelperCasts(string $number): ?array
     {
-        $response = $this->gs->create()->get("https://av-help.memo.wiki/search?keywords={$number}", [
-            'proxy' => env('PROXY', ''),
-            'headers' => [
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
-            ]
-        ]);
+        $response = $this->gs->create()->get("https://av-help.memo.wiki/search?keywords={$number}", $this->headers());
         $contents = $response->getBody()->getContents();
         $dom = make(Document::class, [mb_convert_encoding($contents, 'utf-8', 'euc-jp')]);
         $elements = $dom->find('//div[@class="body"]/h3/a', Query::TYPE_XPATH);
@@ -197,12 +186,7 @@ class JavDbService
             $casts = array_pop($elements);
             $execute_callback[] = function () use ($casts) {
                 try {
-                    $response = $this->gs->create()->get($casts->getAttribute("href"), [
-                        'proxy' => env('PROXY', ''),
-                        'headers' => [
-                            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
-                        ]
-                    ]);
+                    $response = $this->gs->create()->get($casts->getAttribute("href"), $this->headers());
                     $contents = mb_convert_encoding($response->getBody()->getContents(), 'utf-8', 'euc-jp');
                     if (strpos($contents, '名前') !== false && strpos($contents, '生年月日') !== false) {
                         return [
@@ -226,6 +210,17 @@ class JavDbService
             }
         } while (count($elements) > 0);
         return [];
+    }
+
+    private function headers(): array
+    {
+        return [
+            'proxy' => env('PROXY', []) ?: [],
+            'cookies' => $this->cookies(),
+            'headers' => [
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
+            ]
+        ];
     }
 
     private function cookies(): CookieJar

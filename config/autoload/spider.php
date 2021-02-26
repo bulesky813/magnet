@@ -14,8 +14,14 @@ return [
                 '//div[@class="detail_data"]/table/tr[8]/td/a/text()'
             ],
             'images_medium' => [
-                '//div[@class="detail_photo"]/h2/img/@src',
-                '//div[@class="detail_data"]/div/h2/img/@src'
+                [
+                    'xpath' => '//div[@class="detail_photo"]/h2/img/@src',
+                    'eval' => '$value = str_replace(["_o1_","_p_"], ["_e_","_e_"], $value);'
+                ],
+                [
+                    'xpath' => '//div[@class="detail_data"]/div/h2/img/@src',
+                    'eval' => '$value = str_replace(["_o1_","_p_"], ["_e_","_e_"], $value);'
+                ]
             ],
             'title' => '/html/body/div[2]/article[2]/div[1]/h1/text()',
             'rating' => [
@@ -31,11 +37,11 @@ return [
             'year' => [
                 [
                     'xpath' => '//div[@class="detail_data"]/table[2]/tr[4]/td/text()',
-                    'eval' => 'if(strpos($value, "/") === false) $value = null;'
+                    'eval' => 'if(strpos($value, "/") === false)$value = null;'
                 ],
                 [
                     'xpath' => '//div[@class="detail_data"]/table[2]/tr[5]/td/text()',
-                    'eval' => 'if(strpos($value, "/") === false) $value = null;',
+                    'eval' => 'if(strpos($value, "/") === false)$value = null;',
                 ],
                 '//div[@class="detail_data"]/table/tr[5]/td/text()'
             ],
