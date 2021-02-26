@@ -101,38 +101,9 @@ class JavDbService
         ];
         list($genres, $images_medium, $title, $rating, $casts, $year, $summary, $number, $images_content, $favorites) = collect($subject_xpath)
             ->map(function ($xpath_name, $key) use ($dom) {
-                $type_xpath = config(sprintf("%s.subject.%s", $this->rule_keys, $xpath_name));
-                if ($type_xpath) {
-                    if (is_string($type_xpath)) {
-                        return $dom->find($type_xpath, Query::TYPE_XPATH);
-                    } elseif (is_array($type_xpath)) {
-                        $elements = [];
-                        collect($type_xpath)->each(function ($child_xpath, $key) use ($dom, &$elements) {
-                            $elements = $dom->find(
-                                is_string($child_xpath)
-                                    ? $child_xpath : Arr::get($child_xpath, 'xpath', ''),
-                                Query::TYPE_XPATH
-                            );
-                            if (count($elements) > 0) {
-                                if (is_array($child_xpath) && isset($child_xpath['eval'])) {
-                                    $eval_result = [];
-                                    collect($elements)->each(function ($value, $key) use ($child_xpath, &$eval_result) {
-                                        eval($child_xpath['eval']);
-                                        if (!is_null($value)) {
-                                            $eval_result[] = $value;
-                                        }
-                                    })->toArray();
-                                    if (count($eval_result) > 0) {
-                                        $elements = $eval_result;
-                                        return false;
-                                    }
-                                } else {
-                                    return false;
-                                }
-                            }
-                        });
-                        return $elements;
-                    }
+                $rule = config(sprintf("%s.subject.%s", $this->rule_keys, $xpath_name));
+                if ($rule) {
+                    return $this->ruleProcess($dom, $rule);
                 }
                 return [];
             });
@@ -221,6 +192,42 @@ class JavDbService
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
             ]
         ];
+    }
+
+    private function ruleProcess($dom, $rule)
+    {
+        if (is_string($rule)) {
+            return $dom->find($rule, Query::TYPE_XPATH);
+        } elseif (is_array($rule)) {
+            $elements = [];
+            collect($rule)->each(function ($child_xpath, $key) use ($dom, &$elements) {
+                $elements = $dom->find(
+                    is_string($child_xpath)
+                        ? $child_xpath : Arr::get($child_xpath, 'xpath', ''),
+                    Query::TYPE_XPATH
+                );
+                if (count($elements) > 0) {
+                    if (is_array($child_xpath) && isset($child_xpath['eval'])) {
+                        $eval_result = [];
+                        collect($elements)->each(function ($value, $key) use ($child_xpath, &$eval_result) {
+                            eval($child_xpath['eval']);
+                            if (!is_null(trim($value))) {
+                                $eval_result[] = $value;
+                            }
+                        })->toArray();
+                        if (count($eval_result) > 0) {
+                            $elements = $eval_result;
+                            return false;
+                        }
+                    } else {
+                        return false;
+                    }
+                }
+            });
+            return $elements;
+        } else {
+            return [];
+        }
     }
 
     private function cookies(): CookieJar
