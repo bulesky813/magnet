@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Job;
 
+use App\Model\Subject;
 use App\Services\Jav\JavDbService;
 use App\Services\Queue\QueueService;
 use Hyperf\AsyncQueue\Job;
@@ -27,10 +28,14 @@ class ClassifyJob extends Job
             do {
                 $search_result = $jds->spider()->search();
                 collect($search_result)->each(function ($subject, $key) {
-                    $qs = make(QueueService::class);
-                    $qs->subject([
-                        'url' => Arr::get($subject, 'alt', '')
-                    ]);
+                    $url = Arr::get($subject, 'alt', '');
+                    $subject = Subject::query()->where('source', $url)->first();
+                    if (!$subject) {
+                        $qs = make(QueueService::class);
+                        $qs->subject([
+                            'url' => $url
+                        ]);
+                    }
                 });
                 $page++;
                 $jds->uriChange(sprintf($url, $page));

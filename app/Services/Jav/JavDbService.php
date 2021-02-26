@@ -157,16 +157,56 @@ class JavDbService
         $execute_callback = [];
         $casts_output = [];
         do {
-            $casts = array_pop($elements);
-            $execute_callback[] = function () use ($casts) {
+            $casts = array_shift($elements);
+            $execute_callback[] = function () use ($casts, $number) {
                 try {
                     $response = $this->gs->create()->get($casts->getAttribute("href"), $this->headers());
                     $contents = mb_convert_encoding($response->getBody()->getContents(), 'utf-8', 'euc-jp');
-                    if (strpos($contents, '名前') !== false && strpos($contents, '生年月日') !== false) {
-                        return [
-                            'url' => $casts->getAttribute("href"),
-                            'name' => $casts->text(),
-                        ];
+                    $dom = make(Document::class, [$contents]);
+                    $elements = $dom->find('//div[@class="user-area"]/div/div', Query::TYPE_XPATH);
+                    $casts_result = false;
+                    foreach ($elements as $element) {
+                        if (strpos($element->getAttribute("id"), 'content_block_') === false) {
+                            continue;
+                        }
+                        collect($element->find('//pre', Query::TYPE_XPATH))
+                            ->each(function (Element $element, $key) use ($casts, &$casts_result) {
+                                if (!is_array($casts_result)) {
+                                    $casts_result = [];
+                                };
+                                $casts_result[trim($casts->text())] = [
+                                    'url' => $casts->getAttribute("href"),
+                                    'name' => $casts->text(),
+                                ];
+                            });
+                        collect($element->find("//table/tbody/tr", Query::TYPE_XPATH))
+                            ->each(function (Element $element, $key) use ($number, &$casts_result) {
+                                $td_elements = $element->find("td");
+                                if (count($td_elements) > 0 && strpos(
+                                    strtoupper($td_elements[0]->text()),
+                                    strtoupper($number)
+                                ) !== false) {
+                                    collect($td_elements[3]->find("a"))
+                                        ->each(function (Element $link, $key) use (&$casts_result) {
+                                            $casts_name = $link->text();
+                                            if ($casts_name != '?') {
+                                                if (!is_array($casts_result)) {
+                                                    $casts_result = [];
+                                                };
+                                                $casts_result[trim($link->text())] = [
+                                                    'url' => $link->getAttribute("href"),
+                                                    'name' => $link->text(),
+                                                ];
+                                            }
+                                        });
+                                }
+                            });
+                        if ($casts_result) {
+                            break;
+                        }
+                    }
+                    if ($casts_result) {
+                        return $casts_result;
                     }
                     return false;
                 } catch (\Throwable $e) {
@@ -177,13 +217,15 @@ class JavDbService
                 $result = parallel($execute_callback);
                 foreach ($result as $casts_result) {
                     if ($casts_result !== false) {
-                        $casts_output[] = $casts_result;
+                        $casts_output = array_merge($casts_output, $casts_result);
                     }
                 }
                 $execute_callback = [];
+                if ($casts_output) {
+                    return array_values($casts_output);
+                }
             }
         } while (count($elements) > 0);
-        return $casts_output;
     }
 
     private function headers(): array
