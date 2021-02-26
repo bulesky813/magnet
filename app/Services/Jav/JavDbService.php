@@ -109,14 +109,32 @@ class JavDbService
             ->map(function ($xpath_name, $key) use ($dom) {
                 $type_xpath = config(sprintf("%s.subject.%s", $this->rule_keys, $xpath_name));
                 if ($type_xpath) {
-                    if (strpos($type_xpath, '|') === false) {
+                    if (is_string($type_xpath)) {
                         return $dom->find($type_xpath, Query::TYPE_XPATH);
-                    } else {
+                    } elseif (is_array($type_xpath)) {
                         $elements = [];
-                        collect(explode("|", $type_xpath))->each(function ($child_xpath, $key) use ($dom, &$elements) {
-                            $elements = $dom->find($child_xpath, Query::TYPE_XPATH);
+                        collect($type_xpath)->each(function ($child_xpath, $key) use ($dom, &$elements) {
+                            $elements = $dom->find(
+                                is_string($child_xpath)
+                                    ? $child_xpath : Arr::get($child_xpath, 'xpath', ''),
+                                Query::TYPE_XPATH
+                            );
                             if (count($elements) > 0) {
-                                return false;
+                                if (is_array($child_xpath) && isset($child_xpath['eval'])) {
+                                    $eval_result = [];
+                                    collect($elements)->each(function ($value, $key) use ($child_xpath, &$eval_result) {
+                                        eval($child_xpath['eval']);
+                                        if (!is_null($value)) {
+                                            $eval_result[] = $value;
+                                        }
+                                    })->toArray();
+                                    if (count($eval_result) > 0) {
+                                        $elements = $eval_result;
+                                        return false;
+                                    }
+                                } else {
+                                    return false;
+                                }
                             }
                         });
                         return $elements;
