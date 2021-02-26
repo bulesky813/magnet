@@ -124,7 +124,7 @@ class JavDbService
             'rating' => trim(implode("", $rating)),
             'year' => trim(Arr::get($year, 0, ''))
                 ? Carbon::parse(Arr::get($year, 0, ''))->format('Y/m/d') : '',
-            'casts' => $other_casts ? [$other_casts] : collect($casts)->map(function ($cast, $key) {
+            'casts' => $other_casts ? $other_casts : collect($casts)->map(function ($cast, $key) {
                 return [
                     'url' => $cast instanceof Element ? $this->uriPretreatment($cast->getAttribute("href")) : '',
                     'name' => trim($cast instanceof Element ? $cast->text() : $cast)
@@ -141,6 +141,8 @@ class JavDbService
         switch ($this->rule_keys) {
             case 'spider.dmm':
                 return count($subjects) == 121;
+            case 'spider.mgstage':
+                return count($subjects) == 120;
             default:
                 return count($subjects) != 0;
         }
@@ -153,6 +155,7 @@ class JavDbService
         $dom = make(Document::class, [mb_convert_encoding($contents, 'utf-8', 'euc-jp')]);
         $elements = $dom->find('//div[@class="body"]/h3/a', Query::TYPE_XPATH);
         $execute_callback = [];
+        $casts_output = [];
         do {
             $casts = array_pop($elements);
             $execute_callback[] = function () use ($casts) {
@@ -170,17 +173,17 @@ class JavDbService
                     return false;
                 }
             };
-            if (count($execute_callback) == 3 || count($elements) == 0) {
+            if (count($execute_callback) == 5 || count($elements) == 0) {
                 $result = parallel($execute_callback);
                 foreach ($result as $casts_result) {
                     if ($casts_result !== false) {
-                        return $casts_result;
+                        $casts_output[] = $casts_result;
                     }
                 }
                 $execute_callback = [];
             }
         } while (count($elements) > 0);
-        return [];
+        return $casts_output;
     }
 
     private function headers(): array
@@ -210,8 +213,12 @@ class JavDbService
                     if (is_array($child_xpath) && isset($child_xpath['eval'])) {
                         $eval_result = [];
                         collect($elements)->each(function ($value, $key) use ($child_xpath, &$eval_result) {
-                            eval($child_xpath['eval']);
-                            if (!is_null(trim($value))) {
+                            if (is_string($child_xpath['eval'])) {
+                                eval($child_xpath['eval']);
+                            } elseif (is_callable($child_xpath['eval'])) {
+                                $value = call_user_func_array($child_xpath['eval'], [$value, $key]);
+                            }
+                            if ($value !== false) {
                                 $eval_result[] = $value;
                             }
                         })->toArray();

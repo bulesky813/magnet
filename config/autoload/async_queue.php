@@ -15,7 +15,18 @@ return [
         'channel' => 'queue',
         'timeout' => 2,
         'retry_seconds' => 5,
-        'handle_timeout' => 60,
+        'handle_timeout' => 600,
+        'processes' => 1,
+        'concurrent' => [
+            'limit' => 5,
+        ],
+    ],
+    'classify' => [
+        'driver' => Hyperf\AsyncQueue\Driver\RedisDriver::class,
+        'channel' => 'channel.queue',
+        'timeout' => 2,
+        'retry_seconds' => 5,
+        'handle_timeout' => 3600,
         'processes' => 1,
         'concurrent' => [
             'limit' => 5,

@@ -27,7 +27,12 @@ return [
             'rating' => [
                 [
                     'xpath' => '//td[@class="review"]/text()',
-                    'eval' => 'if(preg_match("/[\d.]+/", $value, $matchs))$value=$matchs[0];'
+                    'eval' => function ($value, $key) {
+                        if (preg_match("/[\d.]+/", $value, $matchs)) {
+                            return $matchs[0];
+                        }
+                        return false;
+                    }
                 ]
             ],
             'casts' => [
@@ -36,27 +41,53 @@ return [
             ],
             'year' => [
                 [
-                    'xpath' => '//div[@class="detail_data"]/table[2]/tr[4]/td/text()',
-                    'eval' => 'if(strpos($value, "/") === false)$value = null;'
-                ],
-                [
-                    'xpath' => '//div[@class="detail_data"]/table[2]/tr[5]/td/text()',
-                    'eval' => 'if(strpos($value, "/") === false)$value = null;',
-                ],
-                '//div[@class="detail_data"]/table/tr[5]/td/text()'
+                    'xpath' => '//div[@class="detail_data"]/table/tr',
+                    'eval' => function (\DiDom\Element $value, $key) {
+                        if (strpos($value->find('th')[0]->text(), '配信開始日') !== false) {
+                            return trim($value->find('td')[0]->text());
+                        } else {
+                            return false;
+                        }
+                    }
+                ]
             ],
             'summary' => '//p[@class="txt introduction"]/text()',
             'number' => [
-                '//div[@class="detail_data"]/table[2]/tr[4]/td/text()',
-                '//div[@class="detail_data"]/table/tr[4]/td/text()'
+                [
+                    'xpath' => '//div[@class="detail_data"]/table/tr',
+                    'eval' => function (\DiDom\Element $value, $key) {
+                        if (strpos($value->find('th')[0]->text(), '品番') !== false) {
+                            if (preg_match("/[A-Za-z]{2,}\-\d+/", $value->find('td')[0]->text(), $matchs)) {
+                                return trim($matchs[0]);
+                            }
+                        } else {
+                            return false;
+                        }
+                    }
+                ]
             ],
             'images_content' => '//*[@id="sample-photo"]/dd/ul/li/a/@href',
             'favorites' => [
                 [
                     'xpath' => '//dl[@class="detail_fav_cnt"]/text()',
-                    'eval' => 'if(preg_match("/[\d,]+/", $value, $matchs))$value=$matchs[0];'
+                    'eval' => function (string $value, $key) {
+                        if (preg_match("/[\d,]+/", $value, $matchs)) {
+                            return $matchs[0];
+                        } else {
+                            return false;
+                        }
+                    }
                 ],
-                '//div[@class="detail_data"]/table[1]/tbody/tr[1]/td[2]/text()'
+                [
+                    'xpath' => '//div[@class="detail_data"]/table/tbody/tr',
+                    'eval' => function (\DiDom\Element $value, $key) {
+                        if (strpos($value->find('td')[0]->text(), '登録数') !== false) {
+                            return str_replace(',', '', $value->find('td')[1]->text());
+                        } else {
+                            return false;
+                        }
+                    }
+                ]
             ]
         ]
     ],

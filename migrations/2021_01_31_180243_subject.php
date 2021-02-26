@@ -18,6 +18,7 @@ class Subject extends Migration
             $table->integer('favorites')->default(0)->comment('收藏数量');
             $table->integer('process')->default(0)->comment('是否处理，0未处理，1已处理');
             $table->integer('local')->default(0)->comment('本地是否已下载，0未下载，1已下载');
+            $table->string('casts')->default('')->comment('演员表');
             $table->timestamps();
         });
     }
