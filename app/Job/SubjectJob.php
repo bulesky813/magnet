@@ -12,6 +12,7 @@ use Hyperf\Utils\Arr;
 class SubjectJob extends Job
 {
     private $params;
+    protected $maxAttempts = 5;
 
     public function __construct($params)
     {
@@ -26,7 +27,7 @@ class SubjectJob extends Job
             if ($subject) {
                 return true;
             }
-            $content = make(JavDbService::class, [$url])->spider()->subject();
+            $content = make(JavDbService::class, [$url])->spider(10)->subject();
             $number = Arr::get($content, 'number', '');
             $favorites = Arr::get($content, 'favorites', 0);
             if (!$number) {

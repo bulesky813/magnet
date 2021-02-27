@@ -26,7 +26,11 @@ class ClassifyJob extends Job
             $page = 1;
             $jds = make(JavDbService::class, [sprintf($url, $page)]);
             do {
-                $search_result = $jds->spider()->search();
+                try {
+                    $search_result = $jds->spider(10)->search();
+                } catch (\Throwable $e) {
+                    continue;
+                }
                 collect($search_result)->each(function ($subject, $key) {
                     $url = Arr::get($subject, 'alt', '');
                     $subject = Subject::query()->where('source', $url)->first();

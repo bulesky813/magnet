@@ -89,7 +89,7 @@ class JavDbController extends AbstractController
             })
             ->orderBy("favorites", 'desc')
             ->offset(0)
-            ->limit(10)
+            ->limit(20)
             ->get();
         return view('subject', ['subjects' => $subjects]);
     }

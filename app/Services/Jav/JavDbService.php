@@ -36,7 +36,7 @@ class JavDbService
         return $this;
     }
 
-    public function spider(): JavDbService
+    public function spider(int $timeout = 0): JavDbService
     {
         try {
             $response = $this->gs->create([
@@ -45,7 +45,7 @@ class JavDbService
             ])->request(
                 'GET',
                 sprintf("%s?%s", Arr::get($this->uri, 'path', ''), Arr::get($this->uri, 'query', '')),
-                $this->headers()
+                $this->config($timeout)
             );
         } catch (\Throwable $e) {
             return $this;
@@ -150,7 +150,7 @@ class JavDbService
 
     public function findAvHelperCasts(string $number): ?array
     {
-        $response = $this->gs->create()->get("https://av-help.memo.wiki/search?keywords={$number}", $this->headers());
+        $response = $this->gs->create()->get("https://av-help.memo.wiki/search?keywords={$number}", $this->config(10));
         $contents = $response->getBody()->getContents();
         $dom = make(Document::class, [mb_convert_encoding($contents, 'utf-8', 'euc-jp')]);
         $elements = $dom->find('//div[@class="body"]/h3/a', Query::TYPE_XPATH);
@@ -160,7 +160,7 @@ class JavDbService
             $casts = array_shift($elements);
             $execute_callback[] = function () use ($casts, $number) {
                 try {
-                    $response = $this->gs->create()->get($casts->getAttribute("href"), $this->headers());
+                    $response = $this->gs->create()->get($casts->getAttribute("href"), $this->config(10));
                     $contents = mb_convert_encoding($response->getBody()->getContents(), 'utf-8', 'euc-jp');
                     $dom = make(Document::class, [$contents]);
                     $elements = $dom->find('//div[@class="user-area"]/div/div', Query::TYPE_XPATH);
@@ -229,9 +229,10 @@ class JavDbService
         return [];
     }
 
-    private function headers(): array
+    private function config(int $timeout = 0): array
     {
         return [
+            'timeout' => $timeout,
             'proxy' => env('PROXY', []) ?: [],
             'cookies' => $this->cookies(),
             'headers' => [

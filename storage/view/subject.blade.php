@@ -25,6 +25,12 @@
                 <blockquote class="layui-elem-quote">
                     <p>标题：{{ $subject->content->title }}</p>
                     <p>评分：{{ $subject->content->rating }}</p>
+                    <p>演员：
+                        @foreach($subject->content->casts as $casts)
+                            <span class="layui-badge layui-bg-blue"><a
+                                        href="{{ $casts->url }}">{{ $casts->name }}</a></span>
+                        @endforeach
+                    </p>
                 </blockquote>
             </div>
             <div class="layui-row layui-col-space8">
