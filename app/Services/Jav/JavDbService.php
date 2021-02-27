@@ -186,7 +186,7 @@ class JavDbService
                                     strtoupper($td_elements[0]->text()),
                                     strtoupper($number)
                                 ) !== false) {
-                                    collect($td_elements[3]->find("a"))
+                                    collect(isset($td_elements[3]) ? $td_elements[3]->find("a") : [])
                                         ->each(function (Element $link, $key) use (&$casts_result) {
                                             $casts_name = $link->text();
                                             if ($casts_name != '?') {
@@ -226,6 +226,7 @@ class JavDbService
                 }
             }
         } while (count($elements) > 0);
+        return [];
     }
 
     private function headers(): array

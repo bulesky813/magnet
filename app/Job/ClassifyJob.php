@@ -42,6 +42,7 @@ class ClassifyJob extends Job
             } while ($jds->hasNextPage($search_result));
         } catch (\Throwable $e) {
             echo $e->getMessage() . PHP_EOL;
+            throw $e;
         }
     }
 }

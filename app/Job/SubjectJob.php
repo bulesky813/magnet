@@ -20,23 +20,28 @@ class SubjectJob extends Job
 
     public function handle()
     {
-        $url = Arr::get($this->params, 'url', '');
-        $subject = Subject::query()->where('source', $url)->first();
-        if ($subject) {
+        try {
+            $url = Arr::get($this->params, 'url', '');
+            $subject = Subject::query()->where('source', $url)->first();
+            if ($subject) {
+                return true;
+            }
+            $content = make(JavDbService::class, [$url])->spider()->subject();
+            $number = Arr::get($content, 'number', '');
+            $favorites = Arr::get($content, 'favorites', 0);
+            if (!$number) {
+                return true;
+            }
+            make(Subject::class)->firstOrCreate(['number' => strtoupper($number)], [
+                'number' => strtoupper($number),
+                'content' => $content,
+                'source' => $url,
+                'favorites' => $favorites
+            ]);
             return true;
+        } catch (\Throwable $e) {
+            echo $e->getMessage() . PHP_EOL;
+            throw $e;
         }
-        $content = make(JavDbService::class, [$url])->spider()->subject();
-        $number = Arr::get($content, 'number', '');
-        $favorites = Arr::get($content, 'favorites', 0);
-        if (!$number) {
-            return true;
-        }
-        make(Subject::class)->firstOrCreate(['number' => strtoupper($number)], [
-            'number' => strtoupper($number),
-            'content' => $content,
-            'source' => $url,
-            'favorites' => $favorites
-        ]);
-        return true;
     }
 }
