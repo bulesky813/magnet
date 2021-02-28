@@ -69,6 +69,7 @@ class SpiderClassifyCommand extends HyperfCommand
             $qs->classify([
                 'url' => 'https://www.mgstage.com' . $genre->getAttribute("href") . '&page=%s'
             ]);
+            return false;
         });
     }
 }

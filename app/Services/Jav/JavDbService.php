@@ -179,14 +179,22 @@ class JavDbService
                                     'name' => $casts->text(),
                                 ];
                             });
+                        $actress_index = 3;
+                        collect($element->find("//table/tbody/tr[1]/td/text()", Query::TYPE_XPATH))
+                            ->each(function (string $title, $key) use (&$actress_index) {
+                                if (in_array(trim(str_replace("　", '', $title)), ['ACTRESS', '女優名'])) {
+                                    $actress_index = $key;
+                                    return false;
+                                }
+                            });
                         collect($element->find("//table/tbody/tr", Query::TYPE_XPATH))
-                            ->each(function (Element $element, $key) use ($number, &$casts_result) {
+                            ->each(function (Element $element, $key) use ($actress_index, $number, &$casts_result) {
                                 $td_elements = $element->find("td");
                                 if (count($td_elements) > 0 && strpos(
                                     strtoupper($td_elements[0]->text()),
                                     strtoupper($number)
                                 ) !== false) {
-                                    collect(isset($td_elements[3]) ? $td_elements[3]->find("a") : [])
+                                    collect(isset($td_elements[$actress_index]) ? $td_elements[$actress_index]->find("a") : [])
                                         ->each(function (Element $link, $key) use (&$casts_result) {
                                             $casts_name = $link->text();
                                             if ($casts_name != '?') {
