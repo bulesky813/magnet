@@ -54,7 +54,7 @@ class CastsImportCommand extends HyperfCommand
 
     public function handle()
     {
-        Subject::query()->orderBy("created_at", "desc")->chunk(1000, function ($subject_data, $key) {
+        Subject::query()->orderBy("created_at", "desc")->chunk(100, function ($subject_data, $key) {
             foreach ($subject_data as $subject) {
                 collect($subject->content->casts)->each(function ($casts, $key) use ($subject) {
                     if (filter_var($casts->url, FILTER_VALIDATE_URL) !== false) {

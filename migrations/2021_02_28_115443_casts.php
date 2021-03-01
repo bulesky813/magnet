@@ -16,6 +16,8 @@ class Casts extends Migration
             $table->string("casts")->default('')->comment('演员');
             $table->json('works')->comment('作品表');
             $table->string('url')->default('')->comment('演员链接');
+            $table->decimal('star', 2, 1)->default(3)->comment('评星');
+            $table->integer('process')->default(0)->comment('是否处理');
             $table->timestamps();
             $table->unique(['casts']);
         });
