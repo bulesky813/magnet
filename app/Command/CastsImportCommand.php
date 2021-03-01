@@ -57,19 +57,21 @@ class CastsImportCommand extends HyperfCommand
         Subject::query()->orderBy("created_at", "desc")->chunk(1000, function ($subject_data, $key) {
             foreach ($subject_data as $subject) {
                 collect($subject->content->casts)->each(function ($casts, $key) use ($subject) {
-                    $casts_data = Casts::query()->where('casts', $casts->name)->first();
-                    if (!$casts_data) {
-                        $mCasts = make(Casts::class);
-                        $mCasts->casts = $casts->name;
-                        $mCasts->works = [$subject->number];
-                        $mCasts->url = $casts->url;
-                        $mCasts->save();
-                    } else {
-                        Casts::query()->where('casts', $casts->name)
-                            ->whereRaw("ISNULL(JSON_SEARCH(works, 'one', '{$subject->number}'))")
-                            ->update([
-                                'works' => Db::raw("JSON_ARRAY_APPEND(works, '$', '{$subject->number}')")
-                            ]);
+                    if (filter_var($casts->url, FILTER_VALIDATE_URL) !== false) {
+                        $mCasts = Casts::query()->where('casts', $casts->name)->first();
+                        if (!$mCasts) {
+                            $mCasts = make(Casts::class);
+                            $mCasts->casts = $casts->name;
+                            $mCasts->works = [$subject->number];
+                            $mCasts->url = $casts->url;
+                            $mCasts->save();
+                        } else {
+                            Casts::query()->where('casts', $casts->name)
+                                ->whereRaw("ISNULL(JSON_SEARCH(works, 'one', '{$subject->number}'))")
+                                ->update([
+                                    'works' => Db::raw("JSON_ARRAY_APPEND(works, '$', '{$subject->number}')")
+                                ]);
+                        }
                     }
                 });
             }

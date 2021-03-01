@@ -26,9 +26,12 @@ class SubjectJob extends Job
     {
         try {
             $url = Arr::get($this->params, 'url', '');
-            $subject = Subject::query()->where('source', $url)->first();
-            if ($subject) {
-                return true;
+            $force = Arr::get($this->params, 'force', false); //强制刷新
+            if (!$force) {
+                $subject = Subject::query()->where('source', $url)->first();
+                if ($subject) {
+                    return true;
+                }
             }
             $content = make(JavDbService::class, [$url])->spider(10)->subject();
             $number = Arr::get($content, 'number', '');
@@ -36,25 +39,33 @@ class SubjectJob extends Job
             if (!$number) {
                 return true;
             }
-            make(Subject::class)->firstOrCreate(['number' => strtoupper($number)], [
-                'number' => strtoupper($number),
-                'content' => $content,
-                'source' => $url,
-                'favorites' => $favorites
-            ]);
+            $subject = Subject::query()->where('number', $number)->first();
+            if (!$subject) {
+                $subject = make(Subject::class);
+            }
+            $subject->number = $number;
+            $subject->content = $content;
+            $subject->source = $url;
+            $subject->favorites = $favorites;
+            $subject->save();
             collect(Arr::get($content, 'casts', []))->each(function ($casts, $key) use ($number) {
                 $casts_name = strtoupper(trim(Arr::get($casts, 'name', '')));
-                $casts_data = Casts::query()->where('casts', $casts_name)->first();
-                if (!$casts_data) {
-                    $mCasts = make(Casts::class);
-                    $mCasts->casts = $casts_name;
-                    $mCasts->works = [$number];
-                    $mCasts->url = Arr::get($casts, 'url', '');
-                    $mCasts->save();
-                } else {
-                    Casts::query()->where('casts', $casts_name)->update([
-                        'works' => Db::raw("JSON_ARRAY_APPEND(works, '$', '$number')")
-                    ]);
+                $casts_url = Arr::get($casts, 'url', '');
+                if (filter_var($casts_url, FILTER_VALIDATE_URL) !== false) {
+                    $mCasts = Casts::query()->where('casts', $casts_name)->first();
+                    if (!$mCasts) {
+                        $mCasts = make(Casts::class);
+                        $mCasts->casts = $casts_name;
+                        $mCasts->works = [$number];
+                        $mCasts->url = $casts_url;
+                        $mCasts->save();
+                    } else {
+                        Casts::query()->where('casts', $casts_name)
+                            ->whereRaw("ISNULL(JSON_SEARCH(works, 'one', '{$number}'))")
+                            ->update([
+                                'works' => Db::raw("JSON_ARRAY_APPEND(works, '$', '$number')")
+                            ]);
+                    }
                 }
             });
             return true;
