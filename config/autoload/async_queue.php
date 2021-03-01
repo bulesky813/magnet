@@ -18,7 +18,7 @@ return [
         'handle_timeout' => 600,
         'processes' => 1,
         'concurrent' => [
-            'limit' => 5,
+            'limit' => 2,
         ],
     ],
     'classify' => [

@@ -20,6 +20,7 @@ class Subject extends Migration
             $table->integer('local')->default(0)->comment('本地是否已下载，0未下载，1已下载');
             $table->string('casts')->default('')->comment('演员表');
             $table->timestamps();
+            $table->index(['source']);
         });
     }
 
