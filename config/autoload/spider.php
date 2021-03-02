@@ -44,7 +44,12 @@ return [
                     'xpath' => '//div[@class="detail_data"]/table/tr',
                     'eval' => function (\DiDom\Element $value, $key) {
                         if (strpos($value->find('th')[0]->text(), '配信開始日') !== false) {
-                            return trim($value->find('td')[0]->text());
+                            try {
+                                return \Carbon\Carbon::parse(trim($value->find('td')[0]->text()))
+                                    ->format('Y/m/d');
+                            } catch (\Throwable $e) {
+                                return '1979/01/01';
+                            }
                         } else {
                             return false;
                         }
@@ -105,6 +110,24 @@ return [
             'title' => '//div[@class="container"]/h3/text()',
             'rating' => '',
             'casts' => '//div[@class="star-name"]/a',
+            'year' => [
+                [
+                    'xpath' => '//div[@class="col-md-3 info"]/p',
+                    'eval' => function (\DiDom\Element $value, $key) {
+                        if (count($value->find("span")) > 0 &&
+                            strpos($value->find("span")[0]->text(), '發行日期') !== false) {
+                            try {
+                                return \Carbon\Carbon::parse(preg_replace("/[^\d\/\-]+/", "", $value->text()))
+                                    ->format('Y/m/d');
+                            } catch (\Throwable $e) {
+                                return '1979/01/01';
+                            }
+                        } else {
+                            return false;
+                        }
+                    }
+                ]
+            ],
             "number" => '//div[@class="col-md-3 info"]/p[1]/span[2]/text()',
             "images_content" => '//a[@class="sample-box"]/@href'
         ]

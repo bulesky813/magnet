@@ -35,40 +35,66 @@ class SpiderClassifyCommand extends HyperfCommand
      */
     protected $gs;
 
+    protected $signature = 'cmd:spider_classify {type}';
+
     public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
 
-        parent::__construct('cmd:spider_classify');
+        parent::__construct();
     }
 
     public function configure()
     {
         parent::configure();
-        $this->setDescription('genres分类爬取');
+        $this->setDescription('分类爬取');
     }
 
     public function handle()
     {
-        $root_url = 'https://www.mgstage.com/ppv/genres.php';
-        $response = $this->gs->create()->get($root_url, [
-            'proxy' => env('PROXY', []) ?: [],
-            'cookies' => CookieJar::fromArray([
-                'adc' => 1,
-                'age_check_done' => 1,
-            ], 'mgstage.com'),
-            'headers' => [
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
-            ]
-        ]);
-        $contents = $response->getBody()->getContents();
-        $dom = new Document($contents);
-        $elements = $dom->find('//div[@id="genres_list"]/ul/li/a', Query::TYPE_XPATH);
-        collect($elements)->each(function (Element $genre, $key) {
-            $qs = make(QueueService::class);
-            $qs->classify([
-                'url' => 'https://www.mgstage.com' . $genre->getAttribute("href") . '&page=%s'
+        $type = $this->input->getArgument("type");
+        if ($type == 'mgstage') {
+            $root_url = 'https://www.mgstage.com/ppv/genres.php';
+            $response = $this->gs->create()->get($root_url, [
+                'proxy' => env('PROXY', []) ?: [],
+                'cookies' => CookieJar::fromArray([
+                    'adc' => 1,
+                    'age_check_done' => 1,
+                ], 'mgstage.com'),
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
+                ]
             ]);
-        });
+            $contents = $response->getBody()->getContents();
+            $dom = new Document($contents);
+            $elements = $dom->find('//div[@id="genres_list"]/ul/li/a', Query::TYPE_XPATH);
+            collect($elements)->each(function (Element $genre, $key) {
+                $qs = make(QueueService::class);
+                $qs->classify([
+                    'url' => 'https://www.mgstage.com' . $genre->getAttribute("href") . '&page=%s'
+                ]);
+            });
+        } elseif ($type == 'javbus') {
+            $root_url = 'https://www.javbus.com/genre';
+            $response = $this->gs->create()->get($root_url, [
+                'proxy' => env('PROXY', []) ?: [],
+                'cookies' => CookieJar::fromArray([
+                    'adc' => 1,
+                    'age_check_done' => 1,
+                ], 'mgstage.com'),
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.50'
+                ]
+            ]);
+            $contents = $response->getBody()->getContents();
+            $dom = new Document($contents);
+            $elements = $dom->find('//div[@class="row genre-box"]/a', Query::TYPE_XPATH);
+            collect($elements)->each(function (Element $genre, $key) {
+                $qs = make(QueueService::class);
+                $qs->classify([
+                    'url' => $genre->getAttribute("href") . '/%s'
+                ]);
+            });
+        }
     }
 }

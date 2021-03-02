@@ -30,6 +30,11 @@ Router::addRoute(
 );
 Router::addRoute(
     ['GET', 'POST', 'HEAD'],
+    '/javdb/v1/spider/subject/test',
+    'App\Controller\JavDbController@actionSpiderSubjectTest'
+);
+Router::addRoute(
+    ['GET', 'POST', 'HEAD'],
     '/javdb/v1/view/subject',
     'App\Controller\JavDbController@actionViewSubject'
 );

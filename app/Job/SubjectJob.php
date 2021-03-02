@@ -46,7 +46,7 @@ class SubjectJob extends Job
             $subject->number = $number;
             $subject->content = $content;
             $subject->source = $url;
-            $subject->favorites = $favorites;
+            $subject->favorites = intval($favorites);
             $subject->save();
             collect(Arr::get($content, 'casts', []))->each(function ($casts, $key) use ($number) {
                 $casts_name = strtoupper(trim(Arr::get($casts, 'name', '')));

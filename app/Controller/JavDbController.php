@@ -56,6 +56,19 @@ class JavDbController extends AbstractController
         return Subject::make($subject)->toArray();
     }
 
+    public function actionSpiderSubjectTest()
+    {
+        $url = $this->request->input('url');
+        $page = 1;
+        $jds = make(JavDbService::class, [sprintf($url, $page)]);
+        $subjects = $jds->spider()->search();
+        return [
+            'code' => 0,
+            'data' => $subjects,
+            'message' => ''
+        ];
+    }
+
     public function actionSpiderSubject()
     {
         $url = $this->request->input('url');

@@ -122,8 +122,7 @@ class JavDbService
             'summary' => trim(Arr::get($summary, 0, '')),
             'title' => trim(Arr::get($title, 0, '')),
             'rating' => trim(implode("", $rating)),
-            'year' => trim(Arr::get($year, 0, ''))
-                ? Carbon::parse(Arr::get($year, 0, ''))->format('Y/m/d') : '',
+            'year' => trim(Arr::get($year, 0, '')),
             'casts' => $other_casts ? $other_casts : collect($casts)->map(function ($cast, $key) {
                 return [
                     'url' => $cast instanceof Element ? $this->uriPretreatment($cast->getAttribute("href")) : '',
@@ -143,6 +142,8 @@ class JavDbService
                 return count($subjects) == 121;
             case 'spider.mgstage':
                 return count($subjects) == 120;
+            case 'spider.javbus':
+                return count($subjects) == 30;
             default:
                 return count($subjects) != 0;
         }
