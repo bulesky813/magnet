@@ -105,7 +105,8 @@ return [
             'title' => '//div[@class="container"]/h3/text()',
             'rating' => '',
             'casts' => '//div[@class="star-name"]/a',
-            "number" => '//div[@class="col-md-3 info"]/p[1]/span[2]/text()'
+            "number" => '//div[@class="col-md-3 info"]/p[1]/span[2]/text()',
+            "images_content" => '//a[@class="sample-box"]/@href'
         ]
     ],
     'dmm' => [
