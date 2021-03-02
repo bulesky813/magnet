@@ -83,7 +83,7 @@ class JavDbController extends AbstractController
             });
             $page++;
             $jds->uriChange(sprintf($url, $page));
-        } while ($jds->hasNextPage($search_result));
+        } while ($jds->hasNextPage());
         return [
             'code' => 0,
             'data' => [

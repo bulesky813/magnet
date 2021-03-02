@@ -44,7 +44,7 @@ class ClassifyJob extends Job
                 });
                 $page++;
                 $jds->uriChange(sprintf($url, $page));
-            } while ($jds->hasNextPage($search_result));
+            } while ($jds->hasNextPage());
         } catch (\Throwable $e) {
             echo $e->getMessage() . PHP_EOL;
             throw $e;

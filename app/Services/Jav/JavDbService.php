@@ -135,17 +135,18 @@ class JavDbService
         ];
     }
 
-    public function hasNextPage(array $subjects): bool
+    public function hasNextPage(): bool
     {
+        $doc = make(Document::class, [$this->contents]);
         switch ($this->rule_keys) {
             case 'spider.dmm':
-                return count($subjects) == 121;
+                return true;
             case 'spider.mgstage':
-                return count($subjects) == 120;
+                return true;
             case 'spider.javbus':
-                return count($subjects) == 30;
+                return count($doc->find('//a[@id="next"]', Query::TYPE_XPATH)) > 0;
             default:
-                return count($subjects) != 0;
+                return false;
         }
     }
 
