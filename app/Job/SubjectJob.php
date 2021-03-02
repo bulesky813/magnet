@@ -40,14 +40,16 @@ class SubjectJob extends Job
                 return true;
             }
             $subject = Subject::query()->where('number', $number)->first();
-            if (!$subject) {
-                $subject = make(Subject::class);
+            if (!$subject || $force == true) {
+                if (!$subject) {
+                    $subject = make(Subject::class);
+                    $subject->number = $number;
+                }
+                $subject->content = $content;
+                $subject->source = $url;
+                $subject->favorites = intval($favorites);
+                $subject->save();
             }
-            $subject->number = $number;
-            $subject->content = $content;
-            $subject->source = $url;
-            $subject->favorites = intval($favorites);
-            $subject->save();
             collect(Arr::get($content, 'casts', []))->each(function ($casts, $key) use ($number) {
                 $casts_name = strtoupper(trim(Arr::get($casts, 'name', '')));
                 $casts_url = Arr::get($casts, 'url', '');

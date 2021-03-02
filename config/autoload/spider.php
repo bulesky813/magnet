@@ -128,7 +128,18 @@ return [
                     }
                 ]
             ],
-            "number" => '//div[@class="col-md-3 info"]/p[1]/span[2]/text()',
+            "number" => [
+                [
+                    'xpath' => '//div[@class="col-md-3 info"]/p[1]/span[2]/text()',
+                    'eval' => function (string $value, $key) {
+                        if (preg_match("/[A-Za-z]{2,}\-\d+/", $value, $matchs)) {
+                            return trim(strtoupper($matchs[0]));
+                        } else {
+                            return false;
+                        }
+                    }
+                ]
+            ],
             "images_content" => '//a[@class="sample-box"]/@href'
         ]
     ],
