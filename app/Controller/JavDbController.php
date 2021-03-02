@@ -77,9 +77,9 @@ class JavDbController extends AbstractController
         do {
             $search_result = $jds->spider()->search();
             collect($search_result)->each(function ($subject, $key) {
-                $this->qs->subject([
+                /*$this->qs->subject([
                     'url' => Arr::get($subject, 'alt', '')
-                ]);
+                ]);*/
             });
             $page++;
             $jds->uriChange(sprintf($url, $page));

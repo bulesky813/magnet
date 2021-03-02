@@ -2,6 +2,7 @@
 
 namespace App\Services\Jav;
 
+use App\Services\Jav\AvHelperService;
 use App\Services\Base\GuzzleService;
 use Carbon\Carbon;
 use DiDom\Document;
@@ -56,7 +57,7 @@ class JavDbService
 
     public function search()
     {
-        $dom = new Document($this->contents);
+        $dom = make(Document::class, [$this->contents ?: null]);
         $search_xpath = ['genres', 'alt', 'images', 'directors', 'title', 'year'];
         list($genres, $alt, $images, $directors, $title, $year) = collect($search_xpath)
             ->map(function ($rule_name, $key) use ($dom) {
@@ -86,7 +87,7 @@ class JavDbService
 
     public function subject()
     {
-        $dom = new Document($this->contents);
+        $dom = make(Document::class, [$this->contents ?: null]);
         $subject_xpath = [
             'genres',
             'images_medium',
@@ -137,12 +138,16 @@ class JavDbService
 
     public function hasNextPage(): bool
     {
-        $doc = make(Document::class, [$this->contents]);
+        $doc = make(Document::class, [$this->contents ?: null]);
         switch ($this->rule_keys) {
             case 'spider.dmm':
                 return true;
             case 'spider.mgstage':
-                return true;
+                $next = collect($doc->find('//div[@class="pager_search_bottom"]/p/a/text()', Query::TYPE_XPATH))
+                    ->first(function (string $value, $key) {
+                        return trim($value) == '最後';
+                    });
+                return $next == '最後';
             case 'spider.javbus':
                 return count($doc->find('//a[@id="next"]', Query::TYPE_XPATH)) > 0;
             default:
@@ -152,87 +157,45 @@ class JavDbService
 
     public function findAvHelperCasts(string $number): ?array
     {
-        $response = $this->gs->create()->get("https://av-help.memo.wiki/search?keywords={$number}", $this->config(10));
+        $response = $this->gs->create()->get(
+            "https://av-help.memo.wiki/search?keywords={$number}",
+            $this->config(10)
+        );
         $contents = $response->getBody()->getContents();
         $dom = make(Document::class, [mb_convert_encoding($contents, 'utf-8', 'euc-jp')]);
         $elements = $dom->find('//div[@class="body"]/h3/a', Query::TYPE_XPATH);
         $execute_callback = [];
-        $casts_output = [];
+        $outputs = [];
         do {
             $casts = array_shift($elements);
             $execute_callback[] = function () use ($casts, $number) {
                 try {
-                    $response = $this->gs->create()->get($casts->getAttribute("href"), $this->config(10));
+                    $response = $this->gs->create()->get(
+                        $casts->getAttribute("href"),
+                        $this->config(10)
+                    );
                     $contents = mb_convert_encoding($response->getBody()->getContents(), 'utf-8', 'euc-jp');
-                    $dom = make(Document::class, [$contents]);
-                    $elements = $dom->find('//div[@class="user-area"]/div/div', Query::TYPE_XPATH);
-                    $casts_result = false;
-                    foreach ($elements as $element) {
-                        if (strpos($element->getAttribute("id"), 'content_block_') === false) {
-                            continue;
-                        }
-                        collect($element->find('//pre', Query::TYPE_XPATH))
-                            ->each(function (Element $element, $key) use ($casts, &$casts_result) {
-                                if (!is_array($casts_result)) {
-                                    $casts_result = [];
-                                };
-                                $casts_result[trim($casts->text())] = [
-                                    'url' => $casts->getAttribute("href"),
-                                    'name' => $casts->text(),
-                                ];
-                            });
-                        $actress_index = 3;
-                        collect($element->find("//table/tbody/tr[1]/td/text()", Query::TYPE_XPATH))
-                            ->each(function (string $title, $key) use (&$actress_index) {
-                                if (in_array(trim(str_replace("　", '', $title)), ['ACTRESS', '女優名'])) {
-                                    $actress_index = $key;
-                                    return false;
-                                }
-                            });
-                        collect($element->find("//table/tbody/tr", Query::TYPE_XPATH))
-                            ->each(function (Element $element, $key) use ($actress_index, $number, &$casts_result) {
-                                $td_elements = $element->find("td");
-                                if (count($td_elements) > 0 && strpos(
-                                    strtoupper($td_elements[0]->text()),
-                                    strtoupper($number)
-                                ) !== false) {
-                                    collect(isset($td_elements[$actress_index]) ? $td_elements[$actress_index]->find("a") : [])
-                                        ->each(function (Element $link, $key) use (&$casts_result) {
-                                            $casts_name = $link->text();
-                                            if ($casts_name != '?') {
-                                                if (!is_array($casts_result)) {
-                                                    $casts_result = [];
-                                                };
-                                                $casts_result[trim($link->text())] = [
-                                                    'url' => $link->getAttribute("href"),
-                                                    'name' => $link->text(),
-                                                ];
-                                            }
-                                        });
-                                }
-                            });
-                        if ($casts_result) {
-                            break;
-                        }
-                    }
-                    if ($casts_result) {
-                        return $casts_result;
-                    }
-                    return false;
+                    $ahs = make(AvHelperService::class, [$contents, $number]);
+                    $result = [];
+                    collect(['findCastsElement', 'findTableElement', 'findSplitElement'])
+                        ->each(function ($callback, $key) use ($ahs, &$result) {
+                            $result = call_user_func_array([$ahs, $callback], []);
+                            return $result ? false : true;
+                        });
+                    return $result ? $result : false;
                 } catch (\Throwable $e) {
                     return false;
                 }
             };
             if (count($execute_callback) == 5 || count($elements) == 0) {
-                $result = parallel($execute_callback);
-                foreach ($result as $casts_result) {
-                    if ($casts_result !== false) {
-                        $casts_output = array_merge($casts_output, $casts_result);
+                collect(parallel($execute_callback))->each(function ($casts, $key) use (&$outputs) {
+                    if ($casts !== false) {
+                        $outputs = array_merge($outputs, $casts);
                     }
-                }
+                });
                 $execute_callback = [];
-                if ($casts_output) {
-                    return array_values($casts_output);
+                if ($outputs) {
+                    return array_values($outputs);
                 }
             }
         } while (count($elements) > 0);

@@ -72,7 +72,7 @@ class SubjectJob extends Job
             });
             return true;
         } catch (\Throwable $e) {
-            echo $e->getMessage() . PHP_EOL;
+            echo $e->getTraceAsString() . PHP_EOL;
             throw $e;
         }
     }

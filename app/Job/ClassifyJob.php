@@ -29,7 +29,7 @@ class ClassifyJob extends Job
                 try {
                     $search_result = $jds->spider(10)->search();
                 } catch (\Throwable $e) {
-                    echo $e->getMessage() . PHP_EOL;
+                    echo $e->getTraceAsString() . PHP_EOL;
                     continue;
                 }
                 collect($search_result)->each(function ($subject, $key) {
