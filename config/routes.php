@@ -38,3 +38,13 @@ Router::addRoute(
     '/javdb/v1/ajax/process/subject',
     'App\Controller\JavDbController@actionAjaxProcessSubject'
 );
+Router::addRoute(
+    ['GET', 'POST', 'HEAD'],
+    '/javdb/v1/view/casts',
+    'App\Controller\JavDbController@actionViewCasts'
+);
+Router::addRoute(
+    ['GET', 'POST', 'HEAD'],
+    '/javdb/v1/ajax/process/casts',
+    'App\Controller\JavDbController@actionAjaxProcessCasts'
+);

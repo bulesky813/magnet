@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Model\Casts;
 use App\Resource\Jeenpi\Search;
 use App\Resource\Jeenpi\Subject;
 use App\Services\Jav\JavDbService;
@@ -94,6 +95,22 @@ class JavDbController extends AbstractController
         return view('subject', ['subjects' => $subjects]);
     }
 
+    public function actionViewCasts()
+    {
+        $mCasts = make(Casts::class)::query()
+            ->where('process', 0)
+            ->orderBy("id", "asc")
+            ->first();
+        if (!$mCasts) {
+            return '';
+        }
+        $subjects = make(\App\Model\Subject::class)::query()
+            ->whereIn('number', $mCasts->works ?: [])
+            ->orderByRaw('content->\'$.year\' asc')
+            ->get();
+        return view('casts', ['casts' => $mCasts, 'subjects' => $subjects]);
+    }
+
     public function actionAjaxProcessSubject()
     {
         try {
@@ -101,6 +118,24 @@ class JavDbController extends AbstractController
             $subjects = make(\App\Model\Subject::class)::query()
                 ->where('number', $number)
                 ->update(['process' => 1]);
+            return [
+                'code' => 0,
+                'data' => [],
+                'message' => ''
+            ];
+        } catch (\Throwable $e) {
+            throw $e;
+        }
+    }
+
+    public function actionAjaxProcessCasts()
+    {
+        try {
+            $casts = $this->request->input('casts');
+            $star = $this->request->input('star');
+            $result = make(Casts::class)::query()
+                ->where('casts', $casts)
+                ->update(['process' => 1, 'star' => $star]);
             return [
                 'code' => 0,
                 'data' => [],
