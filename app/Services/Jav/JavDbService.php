@@ -174,10 +174,14 @@ class JavDbService
                         $casts->getAttribute("href"),
                         $this->config(10)
                     );
-                    $contents = mb_convert_encoding($response->getBody()->getContents(), 'utf-8', 'euc-jp');
+                    $contents = mb_convert_encoding(
+                        $response->getBody()->getContents(),
+                        'utf-8',
+                        'euc-jp'
+                    );
                     $ahs = make(AvHelperService::class, [$contents, $number]);
                     $result = [];
-                    collect(['findCastsElement', 'findTableElement', 'findSplitElement'])
+                    collect(['findCastsElement', 'findTableElement', 'findSplitElement', 'findListElement'])
                         ->each(function ($callback, $key) use ($ahs, &$result) {
                             $result = call_user_func_array([$ahs, $callback], []);
                             return $result ? false : true;
