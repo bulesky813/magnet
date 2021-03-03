@@ -149,7 +149,7 @@ class JavDbService
                     });
                 return $next == '最後';
             case 'spider.javbus':
-                return count($doc->find('//a[@id="next"]', Query::TYPE_XPATH)) > 0;
+                return $doc->has('//a[@id="next"]', Query::TYPE_XPATH);
             default:
                 return false;
         }
