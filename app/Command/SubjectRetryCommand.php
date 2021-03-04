@@ -49,12 +49,13 @@ class SubjectRetryCommand extends HyperfCommand
     public function configure()
     {
         parent::configure();
-        $this->setDescription('subject重新爬取');
+        $this->setDescription('作品重新爬取');
     }
 
     public function handle()
     {
-        Subject::query()->whereRaw("!ISNULL(JSON_SEARCH(content->'$.casts[*].url', 'one', '')) OR !ISNULL(JSON_SEARCH(content->'$.casts[*].url', 'one', '%www.mgstage.com%'))")
+        Subject::query()
+            ->whereRaw("!ISNULL(JSON_SEARCH(content->'$.casts[*].url', 'one', '')) OR !ISNULL(JSON_SEARCH(content->'$.casts[*].url', 'one', '%www.mgstage.com%'))")
             ->orderBy("number", "asc")
             ->chunk(100, function ($subject_data, $key) {
                 foreach ($subject_data as $subject) {
