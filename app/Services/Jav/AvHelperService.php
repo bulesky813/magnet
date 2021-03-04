@@ -104,12 +104,24 @@ class AvHelperService
     public function findCastsElement(): array
     {
         $casts = [];
-        collect($this->dom->find('//div[@class="user-area"]/div/div', Query::TYPE_XPATH))
-            ->each(function (Element $element, $key) use (&$casts) {
-                if (strpos($element->getAttribute("id"), 'content_block_') === false) {
-                    return true;
-                }
-                if ($element->has("//pre", Query::TYPE_XPATH)) {
+        if ($this->dom->has('//div[@class="user-area"]/div/div/pre', Query::TYPE_XPATH)) {
+            collect($this->dom->find('//div[@class="user-area"]/div/div', Query::TYPE_XPATH))
+                ->each(function (Element $element, $key) use (&$casts) {
+                    if (strpos($element->getAttribute("id"), 'content_block_') === false) {
+                        return true;
+                    }
+                    $find_number = false;
+                    collect($element->find("//a/@href", Query::TYPE_XPATH))
+                        ->each(function ($href, $key) use (&$find_number) {
+                            if (preg_match("/[A-Za-z]{2,}\-\d+/", strtoupper($href), $matches)) {
+                                foreach ($matches as $match) {
+                                    $find_number = $match == $this->number;
+                                }
+                            }
+                        });
+                    if (!$find_number) {
+                        return true;
+                    }
                     $name = trim(str_replace(
                         '- AV女優大辞典wiki',
                         '',
@@ -128,8 +140,8 @@ class AvHelperService
                         'url' => $url,
                         'name' => $name
                     ];
-                }
-            });
+                });
+        }
         return $casts;
     }
 
