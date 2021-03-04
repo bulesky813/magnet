@@ -111,14 +111,18 @@ class AvHelperService
                         return true;
                     }
                     $find_number = false;
-                    collect($element->find("//a/@href", Query::TYPE_XPATH))
-                        ->each(function ($href, $key) use (&$find_number) {
-                            if (preg_match("/[A-Za-z]{2,}\-\d+/", strtoupper($href), $matches)) {
-                                foreach ($matches as $match) {
-                                    $find_number = $match == $this->number;
+                    foreach ($element->find("//a/@href|//a/text()", Query::TYPE_XPATH) as $href) {
+                        if (preg_match("/[A-Za-z]{2,}\-\d+/", strtoupper($href), $matches)) {
+                            foreach ($matches as $match) {
+                                if ($match == $this->number) {
+                                    $find_number = true;
                                 }
                             }
-                        });
+                        }
+                        if ($find_number) {
+                            break;
+                        }
+                    };
                     if (!$find_number) {
                         return true;
                     }
@@ -140,6 +144,7 @@ class AvHelperService
                         'url' => $url,
                         'name' => $name
                     ];
+                    return false;
                 });
         }
         return $casts;
@@ -154,11 +159,16 @@ class AvHelperService
                     return true;
                 }
                 $find_number = false;
-                foreach ($element->find("//a/@href", Query::TYPE_XPATH) as $href) {
+                foreach ($element->find("//a/@href|//a/text()", Query::TYPE_XPATH) as $href) {
                     if (preg_match("/[A-Za-z]{2,}\-\d+/", strtoupper($href), $matches)) {
                         foreach ($matches as $match) {
-                            $find_number = $match == $this->number;
+                            if ($match == $this->number) {
+                                $find_number = true;
+                            }
                         }
+                    }
+                    if ($find_number) {
+                        break;
                     }
                 }
                 if (!$find_number) {

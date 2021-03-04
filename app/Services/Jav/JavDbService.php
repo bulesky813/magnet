@@ -157,52 +157,56 @@ class JavDbService
 
     public function findAvHelperCasts(string $number): ?array
     {
-        $response = $this->gs->create()->get(
-            "https://av-help.memo.wiki/search?keywords={$number}",
-            $this->config(10)
-        );
-        $contents = $response->getBody()->getContents();
-        $dom = make(Document::class, [mb_convert_encoding($contents, 'utf-8', 'euc-jp')]);
-        $elements = $dom->find('//div[@class="body"]/h3/a', Query::TYPE_XPATH);
-        $execute_callback = [];
-        $outputs = [];
+        $page = 1;
         do {
-            $casts = array_shift($elements);
-            $execute_callback[] = function () use ($casts, $number) {
-                try {
-                    $response = $this->gs->create()->get(
-                        $casts->getAttribute("href"),
-                        $this->config(10)
-                    );
-                    $contents = mb_convert_encoding(
-                        $response->getBody()->getContents(),
-                        'utf-8',
-                        'euc-jp'
-                    );
-                    $ahs = make(AvHelperService::class, [$contents, $number]);
-                    $result = [];
-                    collect(['findCastsElement', 'findTableElement', 'findSplitElement', 'findListElement'])
-                        ->each(function ($callback, $key) use ($ahs, &$result) {
-                            $result = call_user_func_array([$ahs, $callback], []);
-                            return $result ? false : true;
-                        });
-                    return $result ? $result : false;
-                } catch (\Throwable $e) {
-                    return false;
-                }
-            };
-            if (count($execute_callback) == 5 || count($elements) == 0) {
-                collect(parallel($execute_callback))->each(function ($casts, $key) use (&$outputs) {
-                    if ($casts !== false) {
-                        $outputs = array_merge($outputs, $casts);
+            $response = $this->gs->create()->get(
+                "https://av-help.memo.wiki/search?keywords={$number}&p=" . $page,
+                $this->config(10)
+            );
+            $contents = $response->getBody()->getContents();
+            $dom = make(Document::class, [mb_convert_encoding($contents, 'utf-8', 'euc-jp')]);
+            $elements = $dom->find('//div[@class="body"]/h3/a', Query::TYPE_XPATH);
+            $execute_callback = [];
+            $outputs = [];
+            do {
+                $casts = array_shift($elements);
+                $execute_callback[] = function () use ($casts, $number) {
+                    try {
+                        $response = $this->gs->create()->get(
+                            $casts->getAttribute("href"),
+                            $this->config(10)
+                        );
+                        $contents = mb_convert_encoding(
+                            $response->getBody()->getContents(),
+                            'utf-8',
+                            'euc-jp'
+                        );
+                        $ahs = make(AvHelperService::class, [$contents, $number]);
+                        $result = [];
+                        collect(['findCastsElement', 'findTableElement', 'findSplitElement', 'findListElement'])
+                            ->each(function ($callback, $key) use ($ahs, &$result) {
+                                $result = call_user_func_array([$ahs, $callback], []);
+                                return $result ? false : true;
+                            });
+                        return $result ? $result : false;
+                    } catch (\Throwable $e) {
+                        return false;
                     }
-                });
-                $execute_callback = [];
-                if ($outputs) {
-                    return array_values($outputs);
+                };
+                if (count($execute_callback) == 5 || count($elements) == 0) {
+                    collect(parallel($execute_callback))->each(function ($casts, $key) use (&$outputs) {
+                        if ($casts !== false) {
+                            $outputs = array_merge($outputs, $casts);
+                        }
+                    });
+                    $execute_callback = [];
+                    if ($outputs) {
+                        return array_values($outputs);
+                    }
                 }
-            }
-        } while (count($elements) > 0);
+            } while (count($elements) > 0);
+            $page++;
+        } while ($dom->has('//div[@class="paging-bottom"]/a[contains(text(),"次の10件")]', Query::TYPE_XPATH));
         return [];
     }
 
