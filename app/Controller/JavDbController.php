@@ -119,7 +119,7 @@ class JavDbController extends AbstractController
         }
         $subjects = make(\App\Model\Subject::class)::query()
             ->whereIn('number', $mCasts->works ?: [])
-            ->orderByRaw('content->\'$.year\' asc')
+            ->orderByRaw('content->\'$.year\' desc')
             ->get();
         return view('casts', ['casts' => $mCasts, 'subjects' => $subjects]);
     }
