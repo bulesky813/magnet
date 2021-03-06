@@ -59,7 +59,7 @@ class AvHelperService
                 if (strpos($element->getAttribute("id"), 'content_block_') === false) {
                     return true;
                 }
-                $actress_index = 3;
+                $actress_index = 0;
                 collect($element->find("//table/*/tr[1]", Query::TYPE_XPATH))
                     ->each(function (Element $tr, $key) use (&$actress_index) {
                         foreach ($tr->children() as $index => $child) {
@@ -69,6 +69,9 @@ class AvHelperService
                             }
                         }
                     });
+                if ($actress_index == 0) {
+                    return true;
+                }
                 collect($element->find("//table/tbody/tr", Query::TYPE_XPATH))
                     ->each(function (Element $element, $key) use ($actress_index, &$casts) {
                         $td = $element->find("td");
@@ -147,41 +150,6 @@ class AvHelperService
                     return false;
                 });
         }
-        return $casts;
-    }
-
-    public function findListElement(): array
-    {
-        $casts = [];
-        collect($this->dom->find('//div[@class="user-area"]/div/div', Query::TYPE_XPATH))
-            ->each(function (Element $element, $key) use (&$casts) {
-                if (strpos($element->getAttribute("id"), 'content_block_') === false) {
-                    return true;
-                }
-                $find_number = false;
-                foreach ($element->find("//a/@href|//a/text()", Query::TYPE_XPATH) as $href) {
-                    if (preg_match("/[A-Za-z]{2,}\-\d+/", strtoupper($href), $matches)) {
-                        foreach ($matches as $match) {
-                            if ($match == $this->number) {
-                                $find_number = true;
-                            }
-                        }
-                    }
-                    if ($find_number) {
-                        break;
-                    }
-                }
-                if (!$find_number) {
-                    return true;
-                }
-                if ($a = $element->find("//blockquote/span/a", Query::TYPE_XPATH)) {
-                    $casts[trim($a[0]->text())] = [
-                        'url' => $a[0]->getAttribute('href'),
-                        'name' => $a[0]->text()
-                    ];
-                }
-                return false;
-            });
         return $casts;
     }
 }

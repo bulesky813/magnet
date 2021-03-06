@@ -183,7 +183,7 @@ class JavDbService
                         );
                         $ahs = make(AvHelperService::class, [$contents, $number]);
                         $result = [];
-                        collect(['findCastsElement', 'findTableElement', 'findSplitElement', 'findListElement'])
+                        collect(['findCastsElement', 'findTableElement', 'findSplitElement'])
                             ->each(function ($callback, $key) use ($ahs, &$result) {
                                 $result = call_user_func_array([$ahs, $callback], []);
                                 return $result ? false : true;

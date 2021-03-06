@@ -126,8 +126,7 @@ class JavDbController extends AbstractController
             ->when(array_keys($casts_arr), function ($query) use ($casts_arr) {
                 return $query->whereIn('casts', array_keys($casts_arr));
             })
-            ->where('process', 1)
-            ->where('updated_at', '<', '2021-03-06 13:55:00')
+            ->where('process', 0)
             ->orderBy("id", "asc")
             ->first();
         if (!$mCasts) {
