@@ -206,7 +206,7 @@ class JavDbService
                 }
             } while (count($elements) > 0);
             $page++;
-        } while ($dom->has('//div[@class="paging-bottom"]/a[contains(text(),"次の10件")]', Query::TYPE_XPATH));
+        } while ($dom->has('//div[@class="paging-bottom"]/a[contains(text(),"次の")]', Query::TYPE_XPATH));
         return [];
     }
 
