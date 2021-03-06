@@ -34,9 +34,9 @@
                     <p>标题：{{ $subject->content->title }}</p>
                     <p>评分：{{ $subject->content->rating }}</p>
                     <p>演员：
-                        @foreach($subject->content->casts as $casts)
+                        @foreach($subject->content->casts as $sCasts)
                             <span class="layui-badge layui-bg-blue"><a
-                                        href="{{ $casts->url }}">{{ $casts->name }}</a></span>
+                                        href="{{ $sCasts->url }}">{{ $sCasts->name }}</a></span>
                         @endforeach
                     </p>
                 </blockquote>
@@ -56,7 +56,7 @@
 <script src="/layui/layui.js"></script>
 <script type="text/javascript">
     var $;
-    var star = 1;
+    var star = {{ $casts->star }};
     layui.use(['flow', 'layer', 'jquery', 'rate'], function () {
         var flow = layui.flow;
         var layer = layui.layer;
@@ -66,7 +66,7 @@
         //渲染
         rate.render({
             elem: '#star',
-            value: 1,
+            value: {{ $casts->star }},
             half: true,
             choose: function (value) {
                 star = value;

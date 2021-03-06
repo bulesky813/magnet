@@ -17,6 +17,7 @@ use App\Resource\Jeenpi\Search;
 use App\Resource\Jeenpi\Subject;
 use App\Services\Jav\JavDbService;
 use App\Services\Queue\QueueService;
+use Carbon\Carbon;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\Utils\Arr;
 use function Hyperf\ViewEngine\view;
@@ -110,8 +111,23 @@ class JavDbController extends AbstractController
 
     public function actionViewCasts()
     {
+        $subjects = make(\App\Model\Subject::class)::query()
+            ->selectRaw("content->'$.casts[*].name' as casts")
+            ->whereRaw("!ISNULL(JSON_SEARCH(content->'$.genres', 'one', '美脚'))")
+            ->orderByRaw("content->'$.year' desc")
+            ->get();
+        $casts_arr = [];
+        $subjects->each(function ($subject, $key) use (&$casts_arr) {
+            foreach (json_decode($subject->casts) ?: [] as $casts) {
+                $casts_arr[$casts] = true;
+            }
+        });
         $mCasts = make(Casts::class)::query()
-            ->where('process', 0)
+            ->when(array_keys($casts_arr), function ($query) use ($casts_arr) {
+                return $query->whereIn('casts', array_keys($casts_arr));
+            })
+            ->where('process', 1)
+            ->where('updated_at', '<', '2021-03-06 13:55:00')
             ->orderBy("id", "asc")
             ->first();
         if (!$mCasts) {
@@ -119,6 +135,7 @@ class JavDbController extends AbstractController
         }
         $subjects = make(\App\Model\Subject::class)::query()
             ->whereIn('number', $mCasts->works ?: [])
+            ->whereRaw("JSON_LENGTH(content->'$.casts[*].name') < 3")
             ->orderByRaw('content->\'$.year\' desc')
             ->get();
         return view('casts', ['casts' => $mCasts, 'subjects' => $subjects]);
