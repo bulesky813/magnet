@@ -11,10 +11,12 @@ class AvHelperService
 {
     protected $dom;
     protected $number;
+    protected $casts;
 
-    public function __construct(string $contents, string $number)
+    public function __construct(string $contents, string $number = "", string $casts = "")
     {
         $this->number = $number;
+        $this->casts = $casts;
         $this->dom = new Document($contents ?: null);
     }
 
@@ -151,5 +153,25 @@ class AvHelperService
                 });
         }
         return $casts;
+    }
+
+    public function findSubjectsElement(): array
+    {
+        $outputs = [];
+        collect($this->dom->find(
+            sprintf('//div[@class="user-area"]/div/div/table/tbody/tr/td/a[text()="%s"]', $this->casts),
+            Query::TYPE_XPATH
+        ))->each(function (Element $element, $key) use (&$outputs) {
+            $subject = [];
+            $subject['subject'] = trim($element->parent()->parent()->first("//td/a/text()", Query::TYPE_XPATH));
+            foreach ($element->parent()->find("//a", Query::TYPE_XPATH) as $casts) {
+                $subject['casts'][] = [
+                    'name' => trim($casts->text()),
+                    'url' => $casts->getAttribute("href")
+                ];
+            }
+            $outputs[$subject['subject']] = $subject;
+        });
+        return $outputs;
     }
 }

@@ -24,9 +24,11 @@ class JavDbService
     protected $uri = [];
     protected $rule_keys = '';
 
-    public function __construct(string $url)
+    public function __construct(string $url = "")
     {
-        $this->uriChange($url);
+        if (!empty($url)) {
+            $this->uriChange($url);
+        }
     }
 
     public function uriChange($url): JavDbService
@@ -208,6 +210,61 @@ class JavDbService
             $page++;
         } while ($dom->has('//div[@class="paging-bottom"]/a[contains(text(),"次の")]', Query::TYPE_XPATH));
         return [];
+    }
+
+    public function findAvHelperSubject(string $casts): array
+    {
+        $page = 1;
+        do {
+            $response = $this->gs->create()->get(
+                sprintf(
+                    "https://av-help.memo.wiki/search?search_type=2&search_target=all&keywords=%s&p=" . $page,
+                    urlencode(mb_convert_encoding($casts, 'euc-jp', 'utf-8'))
+                ),
+                $this->config(10)
+            );
+            $contents = $response->getBody()->getContents();
+            $dom = make(Document::class, [mb_convert_encoding($contents, 'utf-8', 'euc-jp')]);
+            $elements = $dom->find('//div[@class="body"]/h3/a', Query::TYPE_XPATH);
+            $execute_callback = [];
+            $outputs = [];
+            do {
+                $link = array_shift($elements);
+                $execute_callback[] = function () use ($link, $casts) {
+                    try {
+                        $response = $this->gs->create()->get(
+                            $link->getAttribute("href"),
+                            $this->config(10)
+                        );
+                        $contents = mb_convert_encoding(
+                            $response->getBody()->getContents(),
+                            'utf-8',
+                            'euc-jp'
+                        );
+                        $ahs = make(AvHelperService::class, [$contents, "", $casts]);
+                        $result = [];
+                        collect(['findSubjectsElement'])
+                            ->each(function ($callback, $key) use ($ahs, &$result) {
+                                $result = call_user_func_array([$ahs, $callback], []);
+                                return $result ? false : true;
+                            });
+                        return $result ? $result : false;
+                    } catch (\Throwable $e) {
+                        return false;
+                    }
+                };
+                if (count($execute_callback) == 5 || count($elements) == 0) {
+                    collect(parallel($execute_callback))->each(function ($casts, $key) use (&$outputs) {
+                        if ($casts !== false) {
+                            $outputs = array_merge($outputs, $casts);
+                        }
+                    });
+                    $execute_callback = [];
+                }
+            } while (count($elements) > 0);
+            $page++;
+        } while ($dom->has('//div[@class="paging-bottom"]/a[contains(text(),"次の")]', Query::TYPE_XPATH));
+        return array_values($outputs);
     }
 
     private function config(int $timeout = 0): array

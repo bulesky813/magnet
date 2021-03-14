@@ -94,6 +94,18 @@ class JavDbController extends AbstractController
         ];
     }
 
+    public function actionAvHelperSubjects()
+    {
+        $casts = $this->request->input('casts');
+        $jds = make(JavDbService::class, []);
+        $subjects = $jds->findAvHelperSubject($casts);
+        return [
+            'code' => 0,
+            'data' => $subjects,
+            'message' => ''
+        ];
+    }
+
     public function actionViewSubject()
     {
         $k = $this->request->input('k', '');
